@@ -1448,7 +1448,7 @@ class BotEngine:
                 self.log("error", f"Liquidation exit failed for {rt.position_id}: {exc}", s)
         await self._close_trade(s, rt, "liquidated", price, "Position liquidated.")
 
-engine = BotEngine()
+
 _engine_cache: dict[str, BotEngine] = {}
 
 def get_engine(user_id: str = "admin") -> BotEngine:

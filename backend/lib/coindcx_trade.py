@@ -1,9 +1,4 @@
-"""Authenticated CoinDCX futures client (INR margin) + paper-trading fallback.
-
-Live orders are placed ONLY when LIVE_TRADING=true and both API credentials are
-present. Otherwise every execution call runs in PAPER mode: identical decisions and
-logs, simulated fills, no money at risk.
-"""
+"""Authenticated CoinDCX futures client (INR margin) + paper-trading fallback."""
 from __future__ import annotations
 
 import asyncio
@@ -46,9 +41,7 @@ def _signed(payload: dict[str, Any]) -> tuple[bytes, dict[str, str]]:
     key, secret = credentials()
     if not key or not secret:
         raise CoinDcxError("CoinDCX API credentials are not configured")
-    # CoinDCX expects the timestamp in MILLISECONDS, generated right before signing.
     body = {**payload, "timestamp": int(exchange_time() * 1000)}
-    # Sign the exact bytes that are sent — compact separators, no re-serialisation.
     raw = json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     signature = hmac.new(secret.encode(), raw, hashlib.sha256).hexdigest()
     return raw, {
@@ -64,16 +57,14 @@ async def signed_post(path: str, payload: dict[str, Any]) -> Any:
         res = await http.post(path, content=raw, headers=headers)
     if res.status_code >= 400:
         raise CoinDcxError(f"CoinDCX {res.status_code}: {res.text[:400]}")
-    return res.json()
+    data = res.json()
+    # FIX: CoinDCX sometimes wraps the order response in a list; unwrap it.
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return data[0]
+    return data
 
 
 async def signed_get(path: str, payload: dict[str, Any]) -> Any:
-    """Signed GET request. A handful of CoinDCX read routes (e.g. the futures wallet
-    endpoint) are GET-only, but still expect the signed JSON as the actual request
-    BODY — not as a query parameter. Sending it as `?body=...` still 401s, because
-    the signature covers the raw body bytes, not a re-encoded query string. This
-    mirrors CoinDCX's own sample: `requests.get(url, data=json_body, headers=headers)`.
-    """
     raw, headers = _signed(payload)
     async with httpx.AsyncClient(base_url=BASE, timeout=httpx.Timeout(10, read=30)) as http:
         res = await http.request("GET", path, content=raw, headers=headers)
@@ -82,11 +73,7 @@ async def signed_get(path: str, payload: dict[str, Any]) -> Any:
     return res.json()
 
 
-# ---------- public metadata ----------
-
 async def inr_instruments() -> list[str]:
-    """Pairs tradable with INR margin. Note: CoinDCX keeps the `B-*_USDT` symbol and
-    selects the wallet via `margin_currency_short_name`, so these are USDT-named."""
     async with httpx.AsyncClient(base_url=BASE, timeout=15) as http:
         res = await http.get(
             "/exchange/v1/derivatives/futures/data/active_instruments",
@@ -101,7 +88,6 @@ _rate_cache: tuple[float, Decimal] | None = None
 
 
 async def usdt_inr_rate() -> Decimal:
-    """USDT→INR spot rate, used to convert an INR margin cap into contract quantity."""
     global _rate_cache
     if _rate_cache and time.time() - _rate_cache[0] < 60:
         return _rate_cache[1]
@@ -159,10 +145,6 @@ def order_quantity(
     leverage: float,
     usdt_inr: Decimal,
 ) -> Decimal:
-    """Contracts for `capital_inr` of INR margin at `leverage`, floored to the pair's step.
-
-    Contracts are priced in USDT, so the INR margin is converted at the spot USDTINR rate.
-    """
     def decimal_field(*names: str, default: Decimal = Decimal(0)) -> Decimal:
         for name in names:
             value = instrument.get(name)
@@ -195,16 +177,6 @@ def order_quantity(
 
 
 def round_price(price: Decimal, instrument: dict[str, Any]) -> Decimal:
-    """Snap `price` to the instrument's price tick.
-
-    `order_quantity()` already floors quantity to the pair's `quantity_increment`,
-    but nothing was doing the equivalent for price — a limit order price (or a
-    TP/SL trigger price) that isn't an exact multiple of the instrument's tick size
-    is rejected outright by CoinDCX with a plain 400, no matter how correct the
-    quantity, leverage, or margin sizing is. A raw candle-close price is arbitrary
-    precision and almost never lands on a valid tick by chance, so every limit
-    entry and every TP/SL attach must be snapped through this before it is sent.
-    """
     tick = Decimal(0)
     for name in ("price_increment", "tick_size", "price_step", "min_price_increment"):
         value = instrument.get(name)
@@ -223,18 +195,7 @@ def round_price(price: Decimal, instrument: dict[str, Any]) -> Decimal:
     return snapped if snapped > 0 else tick
 
 
-# ---------- authenticated actions ----------
-
 async def inr_wallet_balance() -> Decimal:
-    """Return free INR margin from the CoinDCX FUTURES wallet endpoint.
-
-    This is the derivatives wallet (`/exchange/v1/derivatives/futures/wallets` — GET,
-    signed body), NOT the spot balance endpoint (`/exchange/v1/users/balances` — POST)
-    the code used to call. Those are two unrelated pools of money; reading the spot
-    wallet meant every order was sized off a balance that had nothing to do with the
-    futures margin actually available, so the wallet always looked emptier (or fuller)
-    than it really was for trading.
-    """
     data = await signed_get("/exchange/v1/derivatives/futures/wallets", {})
     rows = data if isinstance(data, list) else [data]
     inr_rows = [
@@ -245,26 +206,21 @@ async def inr_wallet_balance() -> Decimal:
     ]
     if not inr_rows:
         raise CoinDcxError("CoinDCX futures wallet response did not contain INR")
-
     row = inr_rows[0]
-
     available = row.get("available_balance")
     if available is not None and available != "":
         try:
             return max(Decimal(0), Decimal(str(available)))
         except (TypeError, ValueError):
             pass
-
     balance = Decimal(str(row.get("balance") or 0))
     locked = Decimal(str(row.get("locked_balance") or row.get("locked") or 0))
     return max(Decimal(0), balance - locked)
 
 
 async def validate_live_credentials() -> dict[str, Any]:
-    """Validate the current CoinDCX credentials against real account data."""
     if not credentials()[0] or not credentials()[1]:
         raise CoinDcxError("CoinDCX API credentials are not configured")
-
     balance = await inr_wallet_balance()
     active = await inr_instruments()
     rate = await usdt_inr_rate()
@@ -306,17 +262,6 @@ async def open_short(
 async def place_market(
     pair: str, side: str, quantity: Decimal, leverage: float, margin_currency_short_name: str = "INR"
 ) -> dict[str, Any]:
-    """Place an immediate futures market entry. Order body is wrapped in 'order' object.
-
-    `margin_currency_short_name` MUST be sent on every order/create call. CoinDCX keeps
-    one pair name (e.g. B-BTC_USDT) shared between the INR-margined and USDT-margined
-    books — `inr_instruments()`, `instrument_detail()`, `open_positions()` and
-    `set_leverage()` all already pin this to INR so they read/write the right wallet.
-    This function used to be the one place that didn't: without it, CoinDCX has no way
-    to know this order should draw on the INR futures wallet this bot actually funds
-    and sizes against, so the order either lands against the (empty) USDT margin
-    balance or is rejected outright — both of which show up here as a failed/400 order.
-    """
     return await signed_post(
         "/exchange/v1/derivatives/futures/orders/create",
         {
@@ -344,13 +289,6 @@ async def place_limit(
     leverage: float,
     margin_currency_short_name: str = "INR",
 ) -> dict[str, Any]:
-    """Limit entry at `price`. `side` is 'buy' (long) or 'sell' (short).
-
-    Order body wrapped in 'order' object per CoinDCX API. order_type is 'limit_order'.
-    `price` must already be snapped to the instrument's tick size via `round_price()`.
-    `margin_currency_short_name` is required for the same reason documented on
-    `place_market()` — it is what tells CoinDCX this is an INR-margin order.
-    """
     return await signed_post(
         "/exchange/v1/derivatives/futures/orders/create",
         {
@@ -372,7 +310,6 @@ async def place_limit(
 
 
 async def order_status(order_id: str) -> dict[str, Any]:
-    """`orders/status` does not exist on the futures API — the list route takes an id."""
     data = await signed_post("/exchange/v1/derivatives/futures/orders", {"id": order_id})
     rows = data if isinstance(data, list) else [data]
     return rows[0] if rows and isinstance(rows[0], dict) else {}
@@ -391,7 +328,6 @@ async def open_positions() -> list[dict[str, Any]]:
 
 
 async def find_open_position(pair: str, side: str) -> dict[str, Any] | None:
-    """Find an active INR position after a market order response lacks its ID."""
     for attempt in range(POSITION_LOOKUP_ATTEMPTS):
         positions = await open_positions()
         matches: list[dict[str, Any]] = []
@@ -419,7 +355,6 @@ async def find_open_position(pair: str, side: str) -> dict[str, Any] | None:
 
 
 async def position_status(position_id: str) -> dict[str, Any]:
-    """Find one open INR position by id for live close detection."""
     positions = await open_positions()
     for position in positions:
         if not isinstance(position, dict):
@@ -430,13 +365,6 @@ async def position_status(position_id: str) -> dict[str, Any]:
 
 
 async def attach_tpsl(position_id: str, tp_price: Decimal, sl_price: Decimal | None) -> Any:
-    """Attach TP/SL to an existing position per CoinDCX API spec.
-    
-    Both prices must already be snapped to the instrument's tick size via
-    `round_price()` before being passed in here.
-    
-    TP/SL use market exits by default (immediate fill at market price when triggered).
-    """
     payload: dict[str, Any] = {
         "id": position_id,
         "take_profit": {

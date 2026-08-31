@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, Bot, History, Radio, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, Bot, History, LogOut, Radio, TrendingDown, TrendingUp } from "lucide-react";
 import InstrumentTable from "@/components/dashboard/InstrumentTable";
 import TopGainerBox from "@/components/dashboard/TopGainerBox";
 import { buttonVariants } from "@/components/ui/button";
@@ -38,7 +38,7 @@ function StatChip({ label, value, tone }: { label: string; value: string; tone?:
       <span
         className={cn(
           "num text-[12px] font-semibold",
-          tone === "up" ? "text-[#00c076]" : tone === "down" ? "text-[#ff455b]" : "text-slate-200",
+          tone === "up" ? "text-[#008f59]" : tone === "down" ? "text-[#d9364a]" : "text-[#273142]",
         )}
       >
         {value}
@@ -64,16 +64,16 @@ export default function Dashboard() {
 
   return (
     <div className="terminal-shell flex h-screen flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="flex h-13 shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border-b border-[#1e293b] bg-[#0e131f]/95 px-4 py-2 backdrop-blur-sm">
+      <header className="flex h-13 shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-2 text-[#17202a] backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded bg-[#00c076]/15 text-[#00c076]">
             <Activity className="h-4 w-4" />
           </span>
           <div className="leading-tight">
-            <h1 className="font-heading text-[13px] font-bold tracking-tight text-white">
+            <h1 className="font-heading text-[13px] font-bold tracking-tight text-[#17202a]">
               CoinDCX Pro · Futures Scanner
             </h1>
-            <p className="text-[10px] text-slate-500">USDT perpetuals · live OHLC ranking</p>
+            <p className="text-[10px] text-[#596273]">USDT perpetuals · live OHLC ranking</p>
           </div>
         </div>
 
@@ -116,26 +116,32 @@ export default function Dashboard() {
           <Link
             to="/history"
             data-testid="history-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-slate-300")}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-[#334155] hover:text-[#17202a]")}
+            aria-label="Trade history"
+            title="Trade history"
           >
-            <History className="mr-1 h-3.5 w-3.5" /> History
+            <History className="h-3.5 w-3.5" />
           </Link>
           <Link
             to="/bot"
             data-testid="bot-control-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-[#334155]")}
+            aria-label="Bot control"
+            title="Bot control"
           >
-            <Bot className="mr-1 h-3.5 w-3.5" /> Bot Control
+            <Bot className="h-3.5 w-3.5" />
           </Link>
           <button
             type="button"
-            onClick={() => {
-              localStorage.removeItem("scalp_admin_logged_in");
+            onClick={async () => {
+              await fetch("/api/logout", { method: "POST" });
               window.location.assign("/login");
             }}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-[#334155]")}
+            aria-label="Logout"
+            title="Logout"
           >
-            Logout
+            <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
       </header>

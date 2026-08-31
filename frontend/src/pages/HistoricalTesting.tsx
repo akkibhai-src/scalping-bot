@@ -47,26 +47,16 @@ export default function HistoricalTesting() {
 
   return (
     <div className="min-h-screen bg-[#0b0e14] text-slate-100">
-      <header className="flex flex-wrap items-center gap-3 border-b border-[#1e293b] bg-[#0e131f]/95 px-4 py-3">
+      <header className="flex flex-wrap items-center gap-2 border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a]">
         <Link to="/position" className="text-slate-400 hover:text-white" aria-label="Back to live positions">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <span className="grid h-7 w-7 place-items-center rounded bg-[#f5c451]/15 text-[#f5c451]"><FlaskConical className="h-4 w-4" /></span>
         <div>
-          <h1 className="font-heading text-sm font-bold text-white">Testing Old Data</h1>
-          <p className="text-[10px] text-slate-500">Paper simulation only · never saved to Trade History</p>
+          <h1 className="font-heading text-[12px] font-bold text-[#17202a]">Testing Old Data</h1>
+          <p className="text-[9px] text-[#596273]">Paper simulation only · never saved to Trade History</p>
         </div>
-        <Link to="/history" className="ml-auto inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white"><History className="h-3.5 w-3.5" /> Trade History</Link>
-        <button
-          type="button"
-          onClick={() => {
-            localStorage.removeItem("scalp_admin_logged_in");
-            window.location.assign("/login");
-          }}
-          className="inline-flex items-center rounded-md border border-[#334155] bg-[#111724] px-2.5 py-1.5 text-[11px] font-medium text-slate-200 hover:bg-[#1e293b]"
-        >
-          Logout
-        </button>
+        <Link to="/history" aria-label="Trade history" title="Trade history" className="ml-auto inline-flex h-7 w-7 items-center justify-center text-xs text-slate-400 hover:text-[#17202a]"><History className="h-3.5 w-3.5" /></Link>
       </header>
 
       <main className="mx-auto grid w-full max-w-6xl gap-3 p-4 lg:grid-cols-[340px_1fr]">

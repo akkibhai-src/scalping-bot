@@ -87,6 +87,19 @@ Create backend/.env (keep the API keys empty for paper mode):
     'COINDCX_BASE_URL="https://api.coindcx.com"' \
     'LIVE_TRADING=false' > .env
 
+For the two separate admin logins, add these settings to backend/.env:
+
+  ADMIN_EMAIL="admin"
+  ADMIN_PASSWORD="kunal"
+  SECOND_ADMIN_EMAIL="sayandip"
+  SECOND_ADMIN_PASSWORD="sayandip"
+  SESSION_SECRET="replace-with-a-long-random-secret"
+  SESSION_HTTPS_ONLY="false"
+
+Kunal and Sayandip have separate strategies, credentials, bot state, trades,
+logs, and WebSocket data. Change both passwords and use a random SESSION_SECRET
+before deploying with HTTPS.
+
 Verify the backend imports:
 
   python -c "import server; print('Backend import: OK')"
@@ -115,6 +128,7 @@ Terminal 2:
   cd /workspaces/codespaces-blank/Scalping-main/frontend
   yarn dev --host 0.0.0.0 --port 3000
 
+cd /workspaces/codespaces-blank/Scalping-main/frontend && npm run dev -- --host 0.0.0.0 --port 3000
 Open the frontend at:
   http://localhost:3000
 

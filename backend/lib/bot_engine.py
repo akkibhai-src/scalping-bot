@@ -283,7 +283,9 @@ class Runtime:
 
 
 class BotEngine:
-    def __init__(self) -> None:
+    def __init__(self, owner_id: str = "admin") -> None:
+        self.owner_id = owner_id.strip().lower() or "admin"
+        self.loaded = False
         self.bot_on = False
         self.strategies: dict[str, Strategy] = {}
         self.runtime: dict[str, Runtime] = {}
@@ -318,6 +320,7 @@ class BotEngine:
     def log(self, level: str, message: str, strategy: Strategy | None = None) -> LogEntry:
         entry = LogEntry(
             id=str(uuid.uuid4()),
+            owner_id=self.owner_id,
             strategy_id=strategy.id if strategy else None,
             strategy_name=strategy.name if strategy else None,
             level=level,  # type: ignore[arg-type]
@@ -334,25 +337,25 @@ class BotEngine:
     async def _persist_log(self, entry: LogEntry) -> None:
         try:
             await db.bot_logs.insert_one(entry.model_dump())
-            count = await db.bot_logs.count_documents({})
+            count = await db.bot_logs.count_documents({"owner_id": self.owner_id})
             if count > MAX_LOGS:
-                old_logs = await db.bot_logs.find({}, {"_id": 1}).sort([("ts", -1), ("_id", -1)]).skip(MAX_LOGS).to_list(length=None)
+                old_logs = await db.bot_logs.find({"owner_id": self.owner_id}, {"_id": 1}).sort([("ts", -1), ("_id", -1)]).skip(MAX_LOGS).to_list(length=None)
                 ids = [doc["_id"] for doc in old_logs]
                 if ids:
-                    await db.bot_logs.delete_many({"_id": {"$in": ids}})
+                    await db.bot_logs.delete_many({"_id": {"$in": ids}, "owner_id": self.owner_id})
         except Exception as exc:
             logger.warning("bot log persistence failed for %s: %s", entry.id, exc)
 
     async def _prune_trade_history(self) -> None:
         try:
-            count = await db.trades.count_documents({})
+            count = await db.trades.count_documents({"owner_id": self.owner_id})
             if count <= MAX_TRADE_HISTORY:
                 return
-            docs = await db.trades.find({}, {"_id": 1}).sort("opened_at", 1).limit(count - MAX_TRADE_HISTORY).to_list(length=None)
+            docs = await db.trades.find({"owner_id": self.owner_id}, {"_id": 1}).sort("opened_at", 1).limit(count - MAX_TRADE_HISTORY).to_list(length=None)
             ids = [doc["_id"] for doc in docs if "_id" in doc]
             if not ids:
                 return
-            await db.trades.delete_many({"_id": {"$in": ids}})
+            await db.trades.delete_many({"_id": {"$in": ids}, "owner_id": self.owner_id})
         except Exception as exc:
             logger.warning("trade history compaction failed: %s", exc)
 
@@ -421,13 +424,14 @@ class BotEngine:
 
     async def _save(self, s: Strategy) -> None:
         try:
-            await db.strategies.update_one({"id": s.id}, {"$set": s.model_dump()}, upsert=True)
+            await db.strategies.update_one({"id": s.id, "owner_id": self.owner_id}, {"$set": s.model_dump()}, upsert=True)
         except Exception:
             pass
 
     async def _insert_trade(self, payload: dict[str, Any]) -> None:
         for attempt in range(1, DB_RETRY_ATTEMPTS + 1):
             try:
+                payload.setdefault("owner_id", self.owner_id)
                 await db.trades.insert_one(payload)
                 await self._prune_trade_history()
                 return
@@ -443,7 +447,7 @@ class BotEngine:
             return
         for attempt in range(1, DB_RETRY_ATTEMPTS + 1):
             try:
-                result = await db.trades.update_one({"id": trade_id}, {"$set": fields})
+                result = await db.trades.update_one({"id": trade_id, "owner_id": self.owner_id}, {"$set": fields})
                 if result.matched_count == 0:
                     logger.error("trade update found no record for trade_id=%s", trade_id)
                 return
@@ -455,6 +459,8 @@ class BotEngine:
 
     # ---------- lifecycle ----------
     async def load(self) -> None:
+        from lib import credentials as creds
+        creds.set_user(self.owner_id)
         try:
             await sync_exchange_clock()
         except Exception as exc:
@@ -462,7 +468,7 @@ class BotEngine:
         # Keep cloud logs bounded while preserving the newest entries for diagnostics.
         await self._prune_trade_history()
         try:
-            log_docs = await db.bot_logs.find().sort("ts", -1).to_list(MAX_LOGS)
+            log_docs = await db.bot_logs.find({"owner_id": self.owner_id}).sort("ts", -1).to_list(MAX_LOGS)
             self.logs = []
             for doc in reversed(log_docs):
                 doc.pop("_id", None)
@@ -473,9 +479,9 @@ class BotEngine:
         except Exception as exc:
             logger.warning("bot log history load failed: %s", exc)
         try:
-            settings = await db.bot_settings.find_one({"id": "runtime"})
+            settings = await db.bot_settings.find_one({"id": "runtime", "owner_id": self.owner_id})
             self.bot_on = bool(settings and settings.get("bot_on", False))
-            docs = await db.strategies.find().to_list(200)
+            docs = await db.strategies.find({"owner_id": self.owner_id}).to_list(200)
             for doc in docs:
                 doc.pop("_id", None)
                 doc.pop("open_side", None)
@@ -495,6 +501,7 @@ class BotEngine:
         except Exception as exc:
             logger.warning("strategy load failed: %s", exc)
         self._task = asyncio.create_task(self._loop())
+        self.loaded = True
 
     async def _recover_open_trade(self, s: Strategy, rt: Runtime) -> None:
         """On restart, reattach to any trade left open/pending in the DB, verified
@@ -503,7 +510,7 @@ class BotEngine:
         genuinely open shouldn't be silently orphaned either."""
         try:
             doc = await db.trades.find_one(
-                {"strategy_id": s.id, "status": {"$in": ["open", "pending"]}},
+                {"strategy_id": s.id, "owner_id": self.owner_id, "status": {"$in": ["open", "pending"]}},
                 sort=[("opened_at", -1)],
             )
         except Exception as exc:
@@ -568,6 +575,7 @@ class BotEngine:
 
     # ---------- CRUD ----------
     async def add(self, s: Strategy) -> Strategy:
+        s.owner_id = self.owner_id
         self.strategies[s.id] = s
         self.runtime[s.id] = Runtime()
         await self._save(s)
@@ -585,10 +593,22 @@ class BotEngine:
         self.runtime.pop(sid, None)
         if s is None:
             return False
-        await db.strategies.delete_one({"id": sid})
+        await db.strategies.delete_one({"id": sid, "owner_id": self.owner_id})
         self.log("info", f"Strategy '{s.name}' deleted.", s)
         self._push_state()
         return True
+
+    async def update(self, sid: str, changes: dict[str, Any]) -> Strategy | None:
+        strategy = self.strategies.get(sid)
+        if strategy is None:
+            return None
+        for key, value in changes.items():
+            if value is not None and key not in {"id", "owner_id", "enabled", "status"}:
+                setattr(strategy, key, value)
+        await self._save(strategy)
+        self.log("info", f"Strategy '{strategy.name}' updated.", strategy)
+        self._push_state()
+        return strategy
 
     async def set_enabled(self, sid: str, enabled: bool) -> Strategy | None:
         s = self.strategies.get(sid)
@@ -609,8 +629,8 @@ class BotEngine:
         self.bot_on = on
         try:
             await db.bot_settings.update_one(
-                {"id": "runtime"},
-                {"$set": {"id": "runtime", "bot_on": on}},
+                {"id": "runtime", "owner_id": self.owner_id},
+                {"$set": {"id": "runtime", "owner_id": self.owner_id, "bot_on": on}},
                 upsert=True,
             )
         except Exception as exc:
@@ -626,6 +646,8 @@ class BotEngine:
 
     # ---------- engine loop ----------
     async def _loop(self) -> None:
+        from lib import credentials as creds
+        creds.set_user(self.owner_id)
         while True:
             try:
                 await self._tick()
@@ -1522,3 +1544,12 @@ class BotEngine:
 
 
 engine = BotEngine()
+
+_user_engines: dict[str, BotEngine] = {"admin": engine}
+
+
+def get_engine(owner_id: str) -> BotEngine:
+    normalized = owner_id.strip().lower() or "admin"
+    if normalized not in _user_engines:
+        _user_engines[normalized] = BotEngine(normalized)
+    return _user_engines[normalized]

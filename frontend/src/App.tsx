@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { ChevronDown, Globe2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import Dashboard from "@/pages/Dashboard";
 import BotControl from "@/pages/BotControl";
@@ -77,12 +78,6 @@ function LoginPage() {
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
-    if (trimmedEmail === ADMIN_EMAIL && trimmedPassword === ADMIN_PASSWORD) {
-      localStorage.setItem("scalp_admin_logged_in", "true");
-      window.location.assign("/");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/login", {
@@ -95,7 +90,6 @@ function LoginPage() {
         throw new Error("Invalid email or password");
       }
 
-      localStorage.setItem("scalp_admin_logged_in", "true");
       window.location.assign("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -127,7 +121,7 @@ function LoginPage() {
           align-items: center;
           gap: 10px;
           font-weight: 800;
-          font-size: 20px;
+          font-size: 16px;
           margin-bottom: 66px;
         }
 
@@ -156,7 +150,7 @@ function LoginPage() {
           background: rgba(255,255,255,0.75);
           border-radius: 10px;
           padding: 14px 16px;
-          font-size: 18px;
+          font-size: 16px;
           color: #1f1b2e;
           outline: none;
           box-sizing: border-box;
@@ -250,16 +244,16 @@ function LoginPage() {
           </div>
 
           <div className="login-content">
-            <h1 style={{ margin: "0 0 38px", fontSize: "clamp(2.6rem, 6vw, 5rem)", lineHeight: 0.95, letterSpacing: "-0.06em", fontWeight: 800 }}>
+            <h1 style={{ margin: "0 0 28px", fontSize: "clamp(2rem, 4vw, 3.5rem)", lineHeight: 1, letterSpacing: "-0.03em", fontWeight: 800 }}>
               Welcome back!
             </h1>
 
             <div className="login-card">
               <form onSubmit={handleSubmit} className="login-form">
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#1c1830" }}>Sign in to Minnu Services</h2>
+                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#1c1830" }}>Sign in to Minnu Services</h2>
 
                 <label style={{ display: "grid", gap: 10 }}>
-                  <span style={{ fontSize: 14, color: "#2c2a3d", fontWeight: 600 }}>Enter your email address</span>
+                  <span style={{ fontSize: 12, color: "#2c2a3d", fontWeight: 600 }}>Enter your email address</span>
                   <input
                     type="text"
                     value={email}
@@ -271,7 +265,7 @@ function LoginPage() {
                 </label>
 
                 <label style={{ display: "grid", gap: 10 }}>
-                  <span style={{ fontSize: 14, color: "#2c2a3d", fontWeight: 600 }}>Password</span>
+                  <span style={{ fontSize: 12, color: "#2c2a3d", fontWeight: 600 }}>Password</span>
                   <input
                     type="password"
                     value={password}
@@ -281,7 +275,7 @@ function LoginPage() {
                   />
                 </label>
 
-                {error ? <div style={{ color: "#b91c1c", fontSize: 14 }}>{error}</div> : null}
+                {error ? <div style={{ color: "#b91c1c", fontSize: 12 }}>{error}</div> : null}
 
                 <button
                   type="submit"
@@ -290,10 +284,10 @@ function LoginPage() {
                     marginTop: 6,
                     border: "none",
                     borderRadius: 10,
-                    padding: "14px 16px",
+                    padding: "11px 14px",
                     background: "linear-gradient(135deg, #7e4dd7, #5a3ab9)",
                     color: "white",
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: 700,
                     cursor: isSubmitting ? "not-allowed" : "pointer",
                     opacity: isSubmitting ? 0.8 : 1,
@@ -307,9 +301,9 @@ function LoginPage() {
               <div style={{ marginTop: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, color: "#433d58" }}>
                 <span>Don’t have an account? <a href="#" style={{ color: "#2d1b52", textDecoration: "none", fontWeight: 700 }}>Contact us.</a></span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid rgba(36, 29, 50, 0.15)", borderRadius: 8, padding: "8px 12px", background: "rgba(255,255,255,0.52)" }}>
-                  <span aria-hidden="true">🌐</span>
-                  <span>US</span>
-                  <span>▾</span>
+                  <Globe2 size={14} aria-hidden="true" />
+                  <span style={{ fontSize: 12 }}>US</span>
+                  <ChevronDown size={13} aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -332,11 +326,12 @@ function ProtectedRoutes() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("scalp_admin_logged_in") === "true";
-    setReady(true);
-    if (!isLoggedIn) {
-      window.location.assign("/login");
-    }
+    fetch("/api/session")
+      .then((response) => {
+        if (!response.ok) throw new Error("not authenticated");
+        setReady(true);
+      })
+      .catch(() => window.location.assign("/login"));
   }, []);
 
   if (!ready) return null;
@@ -357,12 +352,10 @@ function ProtectedRoutes() {
 }
 
 export default function App() {
-  const loggedIn = localStorage.getItem("scalp_admin_logged_in") === "true";
-
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="*" element={loggedIn ? <ProtectedRoutes /> : <Navigate to="/login" replace />} />
+      <Route path="*" element={<ProtectedRoutes />} />
     </Routes>
   );
 }

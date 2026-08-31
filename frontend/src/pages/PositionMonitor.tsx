@@ -347,15 +347,15 @@ export default function PositionMonitor() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0b0e14] text-slate-100">
-      <header className="border-b border-[#1e293b] bg-[#0e131f]/95 px-4 py-2 shadow-[0_6px_25px_rgba(2,6,23,0.2)] backdrop-blur-sm">
+      <header className="border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a] shadow-[0_6px_25px_rgba(2,6,23,0.08)] backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[1800px] flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded bg-[#f5c451]/15 text-[#f5c451]">
             <Radar className="h-4 w-4" />
           </span>
           <div className="leading-tight">
-            <h1 className="font-heading text-[13px] font-bold tracking-tight text-white">Live Position Monitor</h1>
-            <p className="num text-[10px] text-slate-500">
+            <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Live Position Monitor</h1>
+            <p className="num text-[9px] text-[#596273]">
               entry · TP · SL on the candles, refreshed every second
             </p>
           </div>
@@ -376,41 +376,39 @@ export default function PositionMonitor() {
           <Link
             to="/"
             data-testid="scanner-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-slate-300")}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+            aria-label="Scanner dashboard"
+            title="Scanner dashboard"
           >
-            <Activity className="mr-1 h-3.5 w-3.5" /> Live Dashboard
+            <Activity className="h-3.5 w-3.5" />
           </Link>
           <Link
             to="/history"
             data-testid="history-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-slate-300")}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+            aria-label="Trade history"
+            title="Trade history"
           >
-            <History className="mr-1 h-3.5 w-3.5" /> History
+            <History className="h-3.5 w-3.5" />
           </Link>
           <Link
             to="/testing"
             data-testid="historical-testing-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+            aria-label="Historical testing"
+            title="Historical testing"
           >
-            <FlaskConical className="mr-1 h-3.5 w-3.5" /> Testing Old Data
+            <FlaskConical className="h-3.5 w-3.5" />
           </Link>
           <Link
             to="/bot"
             data-testid="bot-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+            aria-label="Strategy control"
+            title="Strategy control"
           >
-            <Bot className="mr-1 h-3.5 w-3.5" /> Strategy
+            <Bot className="h-3.5 w-3.5" />
           </Link>
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem("scalp_admin_logged_in");
-              window.location.assign("/login");
-            }}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
-          >
-            Logout
-          </button>
         </div>
         </div>
       </header>

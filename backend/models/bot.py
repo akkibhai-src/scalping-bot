@@ -29,8 +29,21 @@ class StrategyCreate(BaseModel):
     daily_target_inr: float = Field(default=25000, ge=0)
 
 
+class StrategyUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    timeframe: Timeframe | None = None
+    order_type: OrderType | None = None
+    capital_cap_inr: float | None = Field(default=None, gt=0, le=1_000_000_000)
+    leverage: float | None = Field(default=None, ge=1, le=50)
+    tp_pct: float | None = Field(default=None, gt=0, le=20)
+    sl_pct: float | None = Field(default=None, ge=0, le=50)
+    max_trades_per_day: int | None = Field(default=None, ge=1, le=20)
+    daily_target_inr: float | None = Field(default=None, ge=0)
+
+
 class Strategy(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    owner_id: str = "admin"
     name: str
     rule_set: RuleSet = "legacy"
     coin_pick: CoinPick = "top_loser"
@@ -57,6 +70,7 @@ class Strategy(BaseModel):
 
 class LogEntry(BaseModel):
     id: str
+    owner_id: str = "admin"
     strategy_id: str | None = None
     strategy_name: str | None = None
     level: LogLevel
@@ -66,6 +80,7 @@ class LogEntry(BaseModel):
 
 class Trade(BaseModel):
     id: str
+    owner_id: str = "admin"
     strategy_id: str
     strategy_name: str
     pair: str

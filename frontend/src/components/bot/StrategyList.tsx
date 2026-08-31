@@ -1,4 +1,4 @@
-import { Power } from "lucide-react";
+import { Pencil, Power } from "lucide-react";
 import { STATUS_STYLE } from "@/lib/botTypes";
 import type { Strategy } from "@/lib/botTypes";
 import { cn } from "@/lib/utils";
@@ -8,11 +8,13 @@ export default function StrategyList({
   selectedId,
   onSelect,
   onToggleEnabled,
+  onEdit,
 }: {
   strategies: Strategy[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onToggleEnabled: (strategy: Strategy) => void;
+  onEdit: (strategy: Strategy) => void;
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
@@ -77,6 +79,25 @@ export default function StrategyList({
                       >
                         <Power className="h-3 w-3" />
                         {s.enabled ? "ARMED" : "OFF"}
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Edit ${s.name}`}
+                        title="Edit strategy"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(s);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            onEdit(s);
+                          }
+                        }}
+                        className="ml-auto inline-flex cursor-pointer rounded p-1 text-slate-400 hover:bg-slate-700/40 hover:text-white"
+                      >
+                        <Pencil className="h-3 w-3" />
                       </span>
                     </div>
 

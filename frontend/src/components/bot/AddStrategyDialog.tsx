@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TIMEFRAMES } from "@/lib/botTypes";
-import type { CoinPick, OrderType, RuleSet, StrategyCreate, Timeframe } from "@/lib/botTypes";
+import type { CoinPick, OrderType, RuleSet, Strategy, StrategyCreate, Timeframe } from "@/lib/botTypes";
 
 const PICK_LABEL: Record<CoinPick, string> = {
   top_loser: "Top loser (biggest 24h fall)",
@@ -32,12 +32,22 @@ const TF_HINT: Record<Timeframe, string> = {
 
 export default function AddStrategyDialog({
   onCreate,
+  editingStrategy,
+  onUpdate,
+  open: controlledOpen,
+  onOpenChange,
+  showTrigger = true,
   pending,
 }: {
   onCreate: (body: StrategyCreate) => void;
+  editingStrategy?: Strategy | null;
+  onUpdate?: (id: string, body: StrategyCreate) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
   pending: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [ruleSet, setRuleSet] = useState<RuleSet>("legacy");
   const [name, setName] = useState("Short 1% TP");
@@ -50,6 +60,28 @@ export default function AddStrategyDialog({
   const [sl, setSl] = useState("5");
   const [maxTrades, setMaxTrades] = useState("5");
   const [target, setTarget] = useState("25000");
+  const isEditing = Boolean(editingStrategy);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    setInternalOpen(next);
+    onOpenChange?.(next);
+  };
+
+  useEffect(() => {
+    if (!editingStrategy) return;
+    setStep(2);
+    setRuleSet(editingStrategy.rule_set);
+    setName(editingStrategy.name);
+    setCoinPick(editingStrategy.coin_pick);
+    setTimeframe(editingStrategy.timeframe);
+    setOrderType(editingStrategy.order_type);
+    setCapital(String(editingStrategy.capital_cap_inr));
+    setLeverage(String(editingStrategy.leverage));
+    setTp(String(editingStrategy.tp_pct));
+    setSl(editingStrategy.sl_pct == null ? "" : String(editingStrategy.sl_pct));
+    setMaxTrades(String(editingStrategy.max_trades_per_day));
+    setTarget(String(editingStrategy.daily_target_inr));
+  }, [editingStrategy]);
 
   const syncNameFromTimeframe = (selectedRuleSet: RuleSet, selectedTimeframe: Timeframe) => {
     if (selectedRuleSet === "top4_5m_reversal_short") {
@@ -87,7 +119,7 @@ export default function AddStrategyDialog({
   const submit = () => {
     const parsedCapital = Number(capital);
     const parsedLeverage = Number(leverage);
-    onCreate({
+    const body: StrategyCreate = {
       name: name.trim() || "Strategy",
       rule_set: ruleSet,
       coin_pick: coinPick,
@@ -99,22 +131,25 @@ export default function AddStrategyDialog({
       sl_pct: Number(sl) > 0 ? Number(sl) : null,
       max_trades_per_day: Math.min(20, Math.max(1, Number(maxTrades) || 5)),
       daily_target_inr: Math.max(0, Number(target) || 25000),
-    });
+    };
+    if (isEditing && editingStrategy && onUpdate) onUpdate(editingStrategy.id, body);
+    else onCreate(body);
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (next) { setStep(1); selectTemplate("legacy"); } }}>
-      <DialogTrigger
+      {showTrigger ? <DialogTrigger
         render={
           <Button size="sm" data-testid="add-strategy-button" disabled={pending}>
-            <Plus className="mr-1 h-3.5 w-3.5" /> Add Strategy
+            <Plus className="h-3.5 w-3.5" />
+            <span className="sr-only">Add strategy</span>
           </Button>
         }
-      />
+      /> : null}
       <DialogContent className="border-[#1e293b] bg-[#111724] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading">New strategy</DialogTitle>
+          <DialogTitle className="font-heading">{isEditing ? "Edit strategy" : "New strategy"}</DialogTitle>
           <DialogDescription className="text-slate-400">
             {step === 1
               ? "Select a strategy template to continue."
@@ -122,7 +157,7 @@ export default function AddStrategyDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {step === 1 ? (
+        {step === 1 && !isEditing ? (
           <div className="grid gap-2">
             <button type="button" onClick={() => selectTemplate("legacy")} className={`rounded border p-3 text-left ${ruleSet === "legacy" ? "border-[#7f9bff] bg-[#7f9bff]/10" : "border-[#1e293b] bg-[#0b0e14]"}`}>
               <div className="flex items-center justify-between">
@@ -295,7 +330,7 @@ export default function AddStrategyDialog({
                 Back
               </Button>
               <Button size="sm" onClick={submit} data-testid="save-strategy-button">
-                Create strategy
+                {isEditing ? "Save changes" : "Create strategy"}
               </Button>
             </>
           )}

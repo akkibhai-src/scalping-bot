@@ -123,13 +123,16 @@ export default function ApiKeysDialog() {
             size="sm"
             variant="outline"
             data-testid="api-keys-button"
+            aria-label="API keys"
+            title="API keys"
             className={cn(
+              "h-7 w-7 p-0",
               configured
                 ? "border-[#00c076]/40 bg-[#00c076]/[0.08] text-[#6ee7b7] hover:bg-[#00c076]/[0.14]"
                 : "border-amber-500/40 bg-amber-500/[0.06] text-amber-300 hover:bg-amber-500/[0.12]",
             )}
           >
-            <KeyRound className="mr-1 h-3.5 w-3.5" /> API Keys
+            <KeyRound className="h-3.5 w-3.5" />
           </Button>
         }
       />

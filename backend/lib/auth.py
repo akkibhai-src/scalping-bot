@@ -1,23 +1,34 @@
 from __future__ import annotations
 
 import os
+import secrets
 from typing import Any
 
 from lib.db import db
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin").strip().lower()
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "kunal")
+SECOND_ADMIN_EMAIL = os.environ.get("SECOND_ADMIN_EMAIL", "sayandip").strip().lower()
+SECOND_ADMIN_PASSWORD = os.environ.get("SECOND_ADMIN_PASSWORD", "sayandip")
+
+
+def configured_users() -> dict[str, dict[str, str]]:
+    return {
+        ADMIN_EMAIL: {"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD, "role": "admin"},
+        SECOND_ADMIN_EMAIL: {
+            "email": SECOND_ADMIN_EMAIL,
+            "password": SECOND_ADMIN_PASSWORD,
+            "role": "admin",
+        },
+    }
 
 
 async def ensure_admin_user() -> dict[str, Any]:
-    payload = {
-        "email": ADMIN_EMAIL,
-        "password": ADMIN_PASSWORD,
-        "role": "admin",
-        "active": True,
-    }
+    payload = {**configured_users()[ADMIN_EMAIL], "active": True}
     try:
         await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": payload}, upsert=True)
+        second = {**configured_users()[SECOND_ADMIN_EMAIL], "active": True}
+        await db.users.update_one({"email": SECOND_ADMIN_EMAIL}, {"$set": second}, upsert=True)
     except Exception:
         pass
     return payload
@@ -27,7 +38,10 @@ async def validate_admin_login(email: str, password: str) -> bool:
     normalized_email = (email or "").strip().lower()
     normalized_password = (password or "").strip()
 
-    if normalized_email == ADMIN_EMAIL and normalized_password == ADMIN_PASSWORD:
+    configured = configured_users()
+    if normalized_email in configured and secrets.compare_digest(
+        normalized_password, configured[normalized_email]["password"]
+    ):
         await ensure_admin_user()
         return True
 

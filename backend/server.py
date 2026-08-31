@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import os
 import logging
 from pathlib import Path
@@ -110,12 +111,25 @@ async def root():
 
 
 @api_router.post("/login", response_model=AdminLoginResponse)
-async def admin_login(payload: AdminLoginRequest):
+async def admin_login(payload: AdminLoginRequest, request: Request):
     is_valid = await validate_admin_login(payload.email, payload.password)
     if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
     await ensure_admin_user()
-    return AdminLoginResponse(email="admin", role="admin", authenticated=True)
+    request.session["user_id"] = payload.email.strip().lower()
+    return AdminLoginResponse(email=payload.email.strip().lower(), role="admin", authenticated=True)
+
+@api_router.get("/session", response_model=AdminLoginResponse)
+async def current_session(request: Request):
+    user_id = str(request.session.get("user_id") or "").strip().lower()
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return AdminLoginResponse(email=user_id, role="admin", authenticated=True)
+
+
+@api_router.post("/logout", status_code=204)
+async def logout(request: Request) -> None:
+    request.session.clear()
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
@@ -150,6 +164,12 @@ app.add_middleware(
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
+)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("SESSION_SECRET", "replace-this-session-secret-in-production"),
+    same_site="lax",
+    https_only=os.environ.get("SESSION_HTTPS_ONLY", "false").lower() == "true",
 )
 
 # Configure logging

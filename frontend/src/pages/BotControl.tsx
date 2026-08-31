@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Bot, History, LineChart, Power, Radar, Trash2, X } from "lucide-react";
+import { AlertTriangle, Bot, History, LineChart, Power, Radio, Radar, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import AddStrategyDialog from "@/components/bot/AddStrategyDialog";
 import ApiKeysDialog from "@/components/bot/ApiKeysDialog";
 import LogConsole from "@/components/bot/LogConsole";
 import StrategyList from "@/components/bot/StrategyList";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { apiDelete, apiPost } from "@/lib/api";
+import { apiDelete, apiPost, apiPut } from "@/lib/api";
 import type { Strategy, StrategyCreate } from "@/lib/botTypes";
 import { useBotStream } from "@/hooks/useBotStream";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 export default function BotControl() {
   const { state, logs, connection } = useBotStream();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   const queryClient = useQueryClient();
 
@@ -55,6 +56,16 @@ export default function BotControl() {
     onError: () => toast.error("Could not delete the strategy"),
   });
 
+  const update = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: StrategyCreate }) => apiPut<Strategy>(`/bot/strategies/${id}`, body),
+    onSuccess: (s) => {
+      setEditingStrategy(null);
+      toast.success(`Strategy “${s.name}” updated`);
+      refresh();
+    },
+    onError: () => toast.error("Could not update the strategy"),
+  });
+
   const setEnabled = useMutation({
     mutationFn: ({ id, on }: { id: string; on: boolean }) =>
       apiPost<Strategy>(`/bot/strategies/${id}/enabled`, { on }),
@@ -69,16 +80,16 @@ export default function BotControl() {
 
   return (
     <div className="terminal-shell flex h-screen flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-[#1e293b] bg-[#0e131f]/95 px-4 py-2 backdrop-blur-sm">
+      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a] backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded bg-[#00c076]/15 text-[#00c076]">
             <Bot className="h-4 w-4" />
           </span>
           <div className="leading-tight">
-            <h1 className="font-heading text-[13px] font-bold tracking-tight text-white">
+            <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">
               Bot Control Center
             </h1>
-            <p className="num text-[10px] text-slate-500" data-testid="bot-window-label">
+            <p className="num text-[9px] text-[#596273]" data-testid="bot-window-label">
               {state?.trading_window ?? "05:30 → 03:40 IST · slots follow each strategy's timeframe"}
               {state ? ` · ${state.server_time_ist.slice(11, 19)} IST` : ""}
             </p>
@@ -101,13 +112,14 @@ export default function BotControl() {
           <span
             data-testid="bot-connection-badge"
             className={cn(
-              "num rounded-full border px-2.5 py-1 text-[11px]",
+              "num inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px]",
               connection === "live"
                 ? "border-[#00c076]/40 bg-[#00c076]/10 text-[#00c076]"
                 : "border-[#ff455b]/40 bg-[#ff455b]/10 text-[#ff455b]",
             )}
           >
-            {connection === "live" ? "stream connected" : "stream offline"}
+            <Radio className="h-3 w-3" />
+            {connection === "live" ? "Stream" : "Stream offline"}
           </span>
 
           <Button
@@ -116,12 +128,24 @@ export default function BotControl() {
             variant={botOn ? "destructive" : "default"}
             disabled={toggleBot.isPending}
             onClick={() => toggleBot.mutate(!botOn)}
+            aria-label={botOn ? "Turn bot off" : "Turn bot on"}
+            title={botOn ? "Turn bot off" : "Turn bot on"}
+            className="h-7 w-7 p-0"
           >
-            <Power className="mr-1 h-3.5 w-3.5" />
-            {botOn ? "Bot is ON · switch off" : "Bot is OFF · switch on"}
+            <Power className="h-3.5 w-3.5" />
+            <span className="sr-only">{botOn ? "Turn bot off" : "Turn bot on"}</span>
           </Button>
 
           <AddStrategyDialog onCreate={(body) => create.mutate(body)} pending={create.isPending} />
+          <AddStrategyDialog
+            onCreate={() => undefined}
+            editingStrategy={editingStrategy}
+            onUpdate={(id, body) => update.mutate({ id, body })}
+            open={Boolean(editingStrategy)}
+            onOpenChange={(open) => { if (!open) setEditingStrategy(null); }}
+            showTrigger={false}
+            pending={update.isPending}
+          />
 
           <Button
             size="sm"
@@ -129,8 +153,12 @@ export default function BotControl() {
             data-testid="delete-strategy-button"
             disabled={!selected || remove.isPending}
             onClick={() => selected && remove.mutate(selected.id)}
+            className="h-7 w-7 p-0"
+            aria-label="Delete strategy"
+            title="Delete strategy"
           >
-            <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete Strategy
+            <Trash2 className="h-3.5 w-3.5" />
+            <span className="sr-only">Delete strategy</span>
           </Button>
 
           <ApiKeysDialog />
@@ -139,36 +167,32 @@ export default function BotControl() {
             to="/position"
             data-testid="position-link"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+            aria-label="Live position"
+            title="Live position"
           >
-            <Radar className="mr-1 h-3.5 w-3.5" /> Live Position
+            <Radar className="h-3.5 w-3.5" />
           </Link>
 
           <Link
             to="/history"
             data-testid="history-link"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+            aria-label="Trade history"
+            title="Trade history"
           >
-            <History className="mr-1 h-3.5 w-3.5" /> Trade History
+            <History className="h-3.5 w-3.5" />
           </Link>
 
           <Link
             to="/"
             data-testid="scanner-link"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-slate-300")}
+            aria-label="Scanner dashboard"
+            title="Scanner dashboard"
           >
-            <LineChart className="mr-1 h-3.5 w-3.5" /> Scanner
+            <LineChart className="h-3.5 w-3.5" />
           </Link>
 
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem("scalp_admin_logged_in");
-              window.location.assign("/login");
-            }}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
-          >
-            Logout
-          </button>
         </div>
       </header>
 
@@ -208,6 +232,7 @@ export default function BotControl() {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onToggleEnabled={(s) => setEnabled.mutate({ id: s.id, on: !s.enabled })}
+            onEdit={setEditingStrategy}
           />
         </section>
         <section className="terminal-panel min-h-[45vh] lg:col-span-8 lg:min-h-0">

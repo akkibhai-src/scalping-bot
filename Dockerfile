@@ -13,6 +13,6 @@ WORKDIR /app/backend
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./
-COPY --from=frontend-build /build/frontend/dist ./frontend_dist
+COPY --from=frontend-build /build/frontend/dist ./backend/frontend_dist
 EXPOSE 10000
 CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1"]

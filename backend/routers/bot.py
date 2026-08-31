@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from lib.bot_engine import engine, get_engine
 from lib.clock import now_ist
-from lib.clock import now_ist
 from lib.db import db
 from lib import credentials as creds
 from lib import wsutil

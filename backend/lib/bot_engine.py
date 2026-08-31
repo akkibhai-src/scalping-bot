@@ -1444,4 +1444,11 @@ class BotEngine:
         await self._close_trade(s, rt, "liquidated", price, "Position liquidated.")
 
 engine = BotEngine()
+_engine_cache: dict[str, BotEngine] = {}
+
+def get_engine(user_id: str = "admin") -> BotEngine:
+    user_id = user_id.strip().lower() or "admin"
+    if user_id not in _engine_cache:
+        _engine_cache[user_id] = BotEngine(user_id)
+    return _engine_cache[user_id]
 

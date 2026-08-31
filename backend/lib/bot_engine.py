@@ -1442,3 +1442,6 @@ class BotEngine:
             except Exception as exc:
                 self.log("error", f"Liquidation exit failed for {rt.position_id}: {exc}", s)
         await self._close_trade(s, rt, "liquidated", price, "Position liquidated.")
+
+engine = BotEngine()
+

@@ -37,30 +37,24 @@ logger = logging.getLogger(__name__)
 IST = ZoneInfo("Asia/Kolkata")
 WINDOW_START = dtime(5, 30)
 WINDOW_END = dtime(3, 40)
-# Slots are the chosen timeframe's candle boundaries: 5m → :00,:05,…; 1h → :00; 4h → 00,04,…
 TF_MINUTES: dict[str, int] = {"5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440}
-# How long an unfilled limit order may live before it is cancelled.
 ORDER_WINDOW: dict[str, int] = {"5m": 60, "15m": 120, "1h": 300, "4h": 300}
-# Entry-trigger timeframe for the Green→Red reversal strategy (top4_5m_reversal_short),
-# keyed by the strategy's own outer timeframe — always a shorter timeframe used only
-# after the outer-timeframe CN1/CN2 (Green→Red) pair is confirmed.
 TRIGGER_TF: dict[str, str] = {"5m": "1m", "15m": "1m", "30m": "1m", "1h": "1m"}
-PRESCAN_LEAD = 60          # scan one minute before the slot
+PRESCAN_LEAD = 60
 TICK_SECONDS = 2.0
 MAX_LOGS = 400
 MAX_TRADE_HISTORY = 400
-FEE_SAFETY_BUFFER = Decimal("0.98")   # keep ~2% of the wallet free for fees/slippage on 100%-capital strategies
-LIVE_MARGIN_UTILIZATION_LIMIT = Decimal("0.70")  # live orders must fit inside a conservative 70% of the free futures wallet
-LIVE_MARGIN_MINIMUM = Decimal("250")             # avoid sending tiny, useless live orders into a near-empty wallet
+FEE_SAFETY_BUFFER = Decimal("0.98")
+LIVE_MARGIN_UTILIZATION_LIMIT = Decimal("0.70")
+LIVE_MARGIN_MINIMUM = Decimal("250")
 ORDER_RETRY_ATTEMPTS = 3
-ORDER_RETRY_DELAY = 2.0               # seconds between order-placement retries (~4s total window)
-LIQUIDATION_CHECK_SECONDS = 10        # how often to verify a live position still exists on the exchange
+ORDER_RETRY_DELAY = 2.0
+LIQUIDATION_CHECK_SECONDS = 10
 DB_RETRY_ATTEMPTS = 3
 DB_RETRY_DELAY = 1.0
 
 
 def in_window(moment: datetime | None = None) -> bool:
-    """05:30 → 03:40 next day (a window that wraps past midnight)."""
     t = (moment or now_ist()).time()
     return t >= WINDOW_START or t <= WINDOW_END
 
@@ -70,11 +64,6 @@ def order_window(timeframe: str) -> int:
 
 
 def _valid_hourly_slots_for_day(day: datetime.date, tz: ZoneInfo | None = None) -> list[datetime]:
-    """Return the valid 1h boundaries in the trading window for a calendar day.
-
-    The active session runs from 05:30 IST through 03:30 IST on the following day,
-    with the 04:30–05:29 gap intentionally skipped.
-    """
     tz = tz or IST
     start = datetime.combine(day, WINDOW_START, tzinfo=tz)
     end = datetime.combine(day + timedelta(days=1), dtime(3, 30), tzinfo=tz)
@@ -87,14 +76,11 @@ def _valid_hourly_slots_for_day(day: datetime.date, tz: ZoneInfo | None = None) 
 
 
 def next_slot(moment: datetime, timeframe: str = "1h") -> datetime:
-    """Next candle boundary for this timeframe, inside the trading window."""
     minutes = TF_MINUTES.get(timeframe, 60)
     if minutes == 60:
         tz = moment.tzinfo or IST
         if moment.tzinfo is None:
             moment = moment.replace(tzinfo=tz)
-        # Include yesterday's session (it can tail into today before 05:30),
-        # so slots like 00:30 / 01:30 / 02:30 / 03:30 are not missed.
         session_slots = (
             _valid_hourly_slots_for_day(moment.date() - timedelta(days=1), tz)
             + _valid_hourly_slots_for_day(moment.date(), tz)
@@ -114,7 +100,6 @@ def next_slot(moment: datetime, timeframe: str = "1h") -> datetime:
 
 
 def candle_side(candle: dict[str, Any]) -> str | None:
-    """GREEN candle → buy (long), RED candle → sell (short), doji → no trade."""
     if candle["close"] > candle["open"]:
         return "buy"
     if candle["close"] < candle["open"]:
@@ -123,7 +108,6 @@ def candle_side(candle: dict[str, Any]) -> str | None:
 
 
 def candle_close_label(candle: dict[str, Any], timeframe_minutes: int) -> str:
-    """Render a candle interval with a 12-hour start-time calculation label."""
     timestamp = float(candle["time"])
     if timestamp > 10_000_000_000:
         timestamp /= 1000
@@ -139,7 +123,6 @@ def candle_close_label(candle: dict[str, Any], timeframe_minutes: int) -> str:
 
 
 def candle_is_closed(candle: dict[str, Any], timeframe_minutes: int, now: datetime) -> bool:
-    """Return whether this candle's own close time is at or before ``now``."""
     timestamp = float(candle["time"])
     if timestamp > 10_000_000_000:
         timestamp /= 1000
@@ -148,12 +131,6 @@ def candle_is_closed(candle: dict[str, Any], timeframe_minutes: int, now: dateti
 
 
 def current_slot_boundary(now: datetime, timeframe_minutes: int) -> datetime:
-    """Return the most recent candle-close boundary at or before ``now``.
-
-    For the 1h strategy window, boundaries start at 05:30 IST and land on the
-    :30 minute of every hour. This keeps the daily trading loop aligned with the
-    05:30 → 03:40 window instead of a midnight-based 00:00 cadence.
-    """
     if timeframe_minutes == 60:
         tz = now.tzinfo or IST
         if now.tzinfo is None:
@@ -191,8 +168,6 @@ def percent_label(value: float | None) -> str:
 
 
 def filled_quantity(status: dict[str, Any], fallback: float) -> float:
-    """Best-effort read of how much of an order has actually filled — CoinDCX field
-    names vary by endpoint, so try the common ones before falling back."""
     for key in ("filled_quantity", "executed_quantity", "filled_qty"):
         if status.get(key) is not None:
             return float(status[key])
@@ -204,13 +179,6 @@ def filled_quantity(status: dict[str, Any], fallback: float) -> float:
 
 
 def live_capital_limit(strategy_capital: Decimal, wallet_balance: Decimal) -> Decimal:
-    """Cap live orders to a conservative share of the actual free futures margin.
-
-    CoinDCX rejects orders that are sized against marginal or stale wallet data, so a
-    conservative live cap is safer than using the full strategy cap or nearly the whole
-    free wallet. This keeps us inside the account's real usable INR margin while still
-    allowing small entries to execute.
-    """
     if wallet_balance <= 0:
         return Decimal("0")
     usable = wallet_balance * LIVE_MARGIN_UTILIZATION_LIMIT
@@ -218,8 +186,6 @@ def live_capital_limit(strategy_capital: Decimal, wallet_balance: Decimal) -> De
 
 
 def position_is_open(pos: dict[str, Any] | None) -> bool:
-    """Best-effort read of a position-status payload. An empty result from a
-    successful call means the exchange no longer has this position open."""
     if not pos:
         return False
     if "is_open" in pos:
@@ -238,8 +204,6 @@ async def send_order_with_retry(
     leverage: float,
     price: Decimal,
 ) -> dict[str, Any]:
-    """Place the entry order, retrying briefly on transient API/network failures
-    instead of silently dropping the slot on one bad request."""
     last_exc: Exception | None = None
     for attempt in range(1, ORDER_RETRY_ATTEMPTS + 1):
         try:
@@ -256,8 +220,6 @@ async def send_order_with_retry(
 
 
 class Runtime:
-    """Per-strategy scheduling state (never persisted)."""
-
     def __init__(self) -> None:
         self.phase: str = "waiting"
         self.slot: datetime | None = None
@@ -295,14 +257,16 @@ class BotEngine:
         self._inr_pairs: set[str] = set()
         self._inr_detail: dict[str, dict[str, Any]] = {}
 
-    # ---------- logging / pubsub ----------
+
     def subscribe(self) -> asyncio.Queue[str]:
         q: asyncio.Queue[str] = asyncio.Queue(maxsize=50)
         self._subscribers.add(q)
         return q
 
+
     def unsubscribe(self, q: asyncio.Queue[str]) -> None:
         self._subscribers.discard(q)
+
 
     def _push(self, payload: dict[str, Any]) -> None:
         text = json.dumps(payload)
@@ -317,13 +281,14 @@ class BotEngine:
             except asyncio.QueueFull:
                 pass
 
+
     def log(self, level: str, message: str, strategy: Strategy | None = None) -> LogEntry:
         entry = LogEntry(
             id=str(uuid.uuid4()),
             owner_id=self.owner_id,
             strategy_id=strategy.id if strategy else None,
             strategy_name=strategy.name if strategy else None,
-            level=level,  # type: ignore[arg-type]
+            level=level,
             message=message,
             ts=now_ist().isoformat(timespec="seconds"),
         )
@@ -333,6 +298,7 @@ class BotEngine:
         self._push({"type": "log", "log": entry.model_dump()})
         asyncio.create_task(self._persist_log(entry))
         return entry
+
 
     async def _persist_log(self, entry: LogEntry) -> None:
         try:
@@ -345,6 +311,7 @@ class BotEngine:
                     await db.bot_logs.delete_many({"_id": {"$in": ids}, "owner_id": self.owner_id})
         except Exception as exc:
             logger.warning("bot log persistence failed for %s: %s", entry.id, exc)
+
 
     async def _prune_trade_history(self) -> None:
         try:
@@ -359,10 +326,11 @@ class BotEngine:
         except Exception as exc:
             logger.warning("trade history compaction failed: %s", exc)
 
+
     def _push_state(self) -> None:
         self._push({"type": "state", "state": self.state().model_dump()})
 
-    # ---------- state ----------
+
     def state(self) -> BotState:
         return BotState(
             bot_on=self.bot_on,
@@ -375,8 +343,8 @@ class BotEngine:
             strategies=list(self.strategies.values()),
         )
 
+
     def positions(self) -> list[LivePosition]:
-        """Pending orders and open positions, enriched with live price and P&L."""
         out: list[LivePosition] = []
         for s in self.strategies.values():
             rt = self.runtime.get(s.id)
@@ -415,18 +383,21 @@ class BotEngine:
             )
         return out
 
+
     def _set(self, s: Strategy, status: str, detail: str) -> None:
         if s.status != status or s.detail != detail:
-            s.status = status  # type: ignore[assignment]
+            s.status = status
             s.detail = detail
             asyncio.create_task(self._save(s))
             self._push_state()
+
 
     async def _save(self, s: Strategy) -> None:
         try:
             await db.strategies.update_one({"id": s.id, "owner_id": self.owner_id}, {"$set": s.model_dump()}, upsert=True)
         except Exception:
             pass
+
 
     async def _insert_trade(self, payload: dict[str, Any]) -> None:
         for attempt in range(1, DB_RETRY_ATTEMPTS + 1):
@@ -440,6 +411,7 @@ class BotEngine:
                     logger.error("trade insert failed after retries for %s: %s", payload.get("id"), exc)
                     return
                 await asyncio.sleep(DB_RETRY_DELAY)
+
 
     async def _update_trade(self, trade_id: str | None, fields: dict[str, Any]) -> None:
         if not trade_id:
@@ -457,15 +429,17 @@ class BotEngine:
                     return
                 await asyncio.sleep(DB_RETRY_DELAY)
 
-    # ---------- lifecycle ----------
+
     async def load(self) -> None:
+        # FIX P0-2: Prevent duplicate engine loops on concurrent calls
+        if self.loaded:
+            return
         from lib import credentials as creds
         creds.set_user(self.owner_id)
         try:
             await sync_exchange_clock()
         except Exception as exc:
             logger.warning("CoinDCX clock sync failed; using local clock: %s", exc)
-        # Keep cloud logs bounded while preserving the newest entries for diagnostics.
         await self._prune_trade_history()
         try:
             log_docs = await db.bot_logs.find({"owner_id": self.owner_id}).sort("ts", -1).to_list(MAX_LOGS)
@@ -492,7 +466,7 @@ class BotEngine:
                 self.runtime[s.id] = rt
                 await self._recover_open_trade(s, rt)
                 if rt.phase in ("in_position", "pending_order"):
-                    continue  # _recover_open_trade already set status/detail
+                    continue
                 s.status = "stopped" if s.enabled else "idle"
                 s.detail = "Reloaded after restart — switch the bot on to arm."
                 if self.bot_on and s.enabled:
@@ -503,11 +477,8 @@ class BotEngine:
         self._task = asyncio.create_task(self._loop())
         self.loaded = True
 
+
     async def _recover_open_trade(self, s: Strategy, rt: Runtime) -> None:
-        """On restart, reattach to any trade left open/pending in the DB, verified
-        against the exchange — a trade that actually closed while the bot was down
-        (TP/SL/liquidation) shouldn't get monitored forever, and a trade that's still
-        genuinely open shouldn't be silently orphaned either."""
         try:
             doc = await db.trades.find_one(
                 {"strategy_id": s.id, "owner_id": self.owner_id, "status": {"$in": ["open", "pending"]}},
@@ -565,6 +536,7 @@ class BotEngine:
             s,
         )
 
+
     async def stop(self) -> None:
         if self._task:
             self._task.cancel()
@@ -573,7 +545,7 @@ class BotEngine:
             except (asyncio.CancelledError, Exception):
                 pass
 
-    # ---------- CRUD ----------
+
     async def add(self, s: Strategy) -> Strategy:
         s.owner_id = self.owner_id
         self.strategies[s.id] = s
@@ -588,6 +560,7 @@ class BotEngine:
         self._push_state()
         return s
 
+
     async def remove(self, sid: str) -> bool:
         s = self.strategies.pop(sid, None)
         self.runtime.pop(sid, None)
@@ -597,6 +570,7 @@ class BotEngine:
         self.log("info", f"Strategy '{s.name}' deleted.", s)
         self._push_state()
         return True
+
 
     async def update(self, sid: str, changes: dict[str, Any]) -> Strategy | None:
         strategy = self.strategies.get(sid)
@@ -609,6 +583,7 @@ class BotEngine:
         self.log("info", f"Strategy '{strategy.name}' updated.", strategy)
         self._push_state()
         return strategy
+
 
     async def set_enabled(self, sid: str, enabled: bool) -> Strategy | None:
         s = self.strategies.get(sid)
@@ -624,6 +599,7 @@ class BotEngine:
         self.log("info", f"Strategy '{s.name}' {'armed' if enabled else 'disabled'}.", s)
         await self._save(s)
         return s
+
 
     async def set_bot(self, on: bool) -> None:
         self.bot_on = on
@@ -644,7 +620,7 @@ class BotEngine:
                     self._set(s, "stopped", "Bot is off.")
         self._push_state()
 
-    # ---------- engine loop ----------
+
     async def _loop(self) -> None:
         from lib import credentials as creds
         creds.set_user(self.owner_id)
@@ -657,50 +633,62 @@ class BotEngine:
                 logger.warning("engine tick failed: %s", exc)
             await asyncio.sleep(TICK_SECONDS)
 
+
     async def _tick(self) -> None:
         now = now_ist()
         today = now.date().isoformat()
 
         for s in list(self.strategies.values()):
-            rt = self.runtime.setdefault(s.id, Runtime())
-            if rt.day != today:
-                rt.day, rt.trades_today = today, 0
-                s.trades_today = 0
-
-            if rt.phase == "in_position":
-                await self._monitor(s, rt)
-                continue
-            if rt.phase == "pending_order":
-                await self._await_fill(s, rt, now)
-                continue
-            if rt.phase == "trigger_wait":
-                await self._await_reversal_trigger(s, rt, now)
-                continue
-
-            if not self.bot_on or not s.enabled:
-                continue
-
-            if rt.trades_today >= s.max_trades_per_day:
-                self._set(s, "waiting", f"Daily cap reached ({rt.trades_today}/{s.max_trades_per_day} trades).")
-                continue
-
-            slot = rt.slot if rt.slot and rt.slot > now - timedelta(minutes=2) else next_slot(now, s.timeframe)
-            rt.slot = slot
-            s.next_slot_ist = slot.strftime("%H:%M IST")
-            seconds_to_slot = (slot - now).total_seconds()
-            prescan_lead = 120 if s.rule_set == "top4_5m_reversal_short" else PRESCAN_LEAD
-
-            if rt.phase == "waiting":
-                if seconds_to_slot <= prescan_lead:
-                    await self._prescan(s, rt, now)
-                else:
-                    self._set(s, "waiting", "Armed — waiting for the next cycle.")
-            elif rt.phase == "scanning" and seconds_to_slot <= 0:
-                await self._select(s, rt, now)
+            # FIX P0-4: Isolate each strategy so one crash does not kill the whole tick
+            try:
+                await self._process_strategy(s, now, today)
+            except Exception as exc:
+                logger.error("Strategy %s tick failed: %s", s.name, exc)
+                self.log("error", f"Strategy {s.name} tick failed: {exc}", s)
 
         self._push({"type": "positions", "positions": [position.model_dump() for position in self.positions()]})
 
-    # ---------- phases ----------
+
+    async def _process_strategy(self, s: Strategy, now: datetime, today: str) -> None:
+        rt = self.runtime.setdefault(s.id, Runtime())
+        if rt.day != today:
+            rt.day, rt.trades_today = today, 0
+            s.trades_today = 0
+            # FIX: Persist trades_today reset to DB
+            asyncio.create_task(self._save(s))
+
+        if rt.phase == "in_position":
+            await self._monitor(s, rt)
+            return
+        if rt.phase == "pending_order":
+            await self._await_fill(s, rt, now)
+            return
+        if rt.phase == "trigger_wait":
+            await self._await_reversal_trigger(s, rt, now)
+            return
+
+        if not self.bot_on or not s.enabled:
+            return
+
+        if rt.trades_today >= s.max_trades_per_day:
+            self._set(s, "waiting", f"Daily cap reached ({rt.trades_today}/{s.max_trades_per_day} trades).")
+            return
+
+        slot = rt.slot if rt.slot and rt.slot > now - timedelta(minutes=2) else next_slot(now, s.timeframe)
+        rt.slot = slot
+        s.next_slot_ist = slot.strftime("%H:%M IST")
+        seconds_to_slot = (slot - now).total_seconds()
+        prescan_lead = 120 if s.rule_set == "top4_5m_reversal_short" else PRESCAN_LEAD
+
+        if rt.phase == "waiting":
+            if seconds_to_slot <= prescan_lead:
+                await self._prescan(s, rt, now)
+            else:
+                self._set(s, "waiting", "Armed — waiting for the next cycle.")
+        elif rt.phase == "scanning" and seconds_to_slot <= 0:
+            await self._select(s, rt, now)
+
+
     def _ranked(self, s: Strategy) -> list[Any]:
         snap = store.snapshot()
         pool = snap.instruments
@@ -709,6 +697,7 @@ class BotEngine:
         if s.rule_set == "highest_mover_sell":
             return pool
         return list(reversed(pool))[:4] if s.coin_pick == "top_loser" else pool[:4]
+
 
     async def _prescan(self, s: Strategy, rt: Runtime, now: datetime) -> None:
         top = self._ranked(s)
@@ -730,8 +719,8 @@ class BotEngine:
         )
         self._set(s, "scanning", detail)
 
+
     async def _inr_instrument(self, pair: str) -> dict[str, Any]:
-        """Cached INR-margin instrument detail. Empty dict means 'not tradable in INR'."""
         if pair in self._inr_detail:
             return self._inr_detail[pair]
         if not self._inr_pairs:
@@ -751,15 +740,15 @@ class BotEngine:
         self._inr_detail[pair] = detail
         return detail
 
+
     async def _select(self, s: Strategy, rt: Runtime, now: datetime) -> None:
-        """At the slot: candle direction decides the side; strongest tradable mover wins."""
         if s.rule_set == "top4_5m_reversal_short":
             await self._select_reversal_candidate(s, rt, now)
             return
         if s.rule_set == "highest_mover_sell":
             await self._select_highest_mover(s, rt, now)
             return
-        picks: list[tuple[float, str, str, float]] = []  # (|change|, pair, side, close)
+        picks: list[tuple[float, str, str, float]] = []
         for pair in rt.candidates:
             try:
                 series = await candle_api.get_candles(pair, s.timeframe, 4)
@@ -768,7 +757,7 @@ class BotEngine:
                 continue
             if len(series) < 2:
                 continue
-            closed = series[-2]  # last fully closed candle on this timeframe
+            closed = series[-2]
             side = candle_side(closed)
             if side is None:
                 self.log("signal", f"{pair}: {s.timeframe} candle closed flat — skipped.", s)
@@ -808,11 +797,9 @@ class BotEngine:
         )
         await self._place(s, rt, Decimal(str(close)))
 
+
     async def _select_highest_mover(self, s: Strategy, rt: Runtime, now: datetime) -> None:
-        """Select the highest positive mover from the full scanner universe.
-        Ties on 24h change are broken by 24h volume, then by pair name, so the pick
-        is always deterministic instead of falling out of dict/list ordering by luck."""
-        candidates: list[tuple[float, float, str, float]] = []  # (change, volume, pair, close)
+        candidates: list[tuple[float, float, str, float]] = []
         for pair in rt.candidates:
             ticker = store.tickers.get(pair)
             change = float(ticker.change_pct or 0.0) if ticker else 0.0
@@ -823,8 +810,6 @@ class BotEngine:
             except Exception as exc:
                 self.log("error", f"{s.timeframe} candle fetch failed for {pair}: {exc}", s)
                 continue
-            # At the 03:10 slot, the current 03:10-03:15 candle is still forming.
-            # Therefore closed[-2] closes at 03:05 (CN1), and closed[-1] closes at 03:10 (CN2).
             closed = series[:-1]
             if not closed or not await self._inr_instrument(pair):
                 continue
@@ -845,7 +830,6 @@ class BotEngine:
             rt.phase, rt.slot = "waiting", None
             self._set(s, "waiting", "No positive INR-tradable mover found — waiting for the next cycle.")
             return
-        # Highest change wins; a tie goes to higher 24h volume, then to the pair name.
         candidates.sort(key=lambda c: (-c[0], -c[1], c[2]))
         change, volume, pair, close = candidates[0]
         rt.pair, rt.side = pair, "sell"
@@ -856,9 +840,8 @@ class BotEngine:
         )
         await self._place(s, rt, Decimal(str(close)))
 
+
     async def _select_reversal_candidate(self, s: Strategy, rt: Runtime, now: datetime) -> None:
-        """Find Green then Red candles — on the strategy's own timeframe — after every
-        pair reaches this slot's boundary."""
         tf = s.timeframe
         tf_minutes = TF_MINUTES.get(tf, 60)
         expected_boundary = current_slot_boundary(now, tf_minutes)
@@ -878,13 +861,11 @@ class BotEngine:
                     self.log("error", f"{tf} candle fetch failed for {pair}: {exc}", s)
                     still_pending.append(pair)
                     continue
-
                 series = sorted(series, key=lambda c: float(c["time"]))
                 closed = [c for c in series if candle_is_closed(c, tf_minutes, poll_now)]
                 if len(closed) < 2:
                     still_pending.append(pair)
                     continue
-
                 cn2 = closed[-1]
                 timestamp = float(cn2["time"])
                 if timestamp > 10_000_000_000:
@@ -893,9 +874,7 @@ class BotEngine:
                 if cn2_close_at < expected_boundary:
                     still_pending.append(pair)
                     continue
-
                 fresh_closed[pair] = closed
-
             pending = still_pending
             if not pending:
                 break
@@ -908,7 +887,6 @@ class BotEngine:
                         s,
                     )
                 break
-
             self.log(
                 "signal",
                 f"Waiting for the {expected_boundary.strftime('%H:%M')} candle to close on: "
@@ -917,6 +895,8 @@ class BotEngine:
             )
             await asyncio.sleep(poll_interval)
             waited += poll_interval
+
+
 
         now = now_ist()
         candidates: list[tuple[float, str, float, str, str]] = []
@@ -1010,12 +990,6 @@ class BotEngine:
             return
         rt.last_trigger_candle = candle_id
 
-        # Only evaluate trigger-timeframe candles that OPEN at/after this cycle's
-        # outer slot (e.g. the 10:15-10:20 5m candle for a 10:15 lock on a 15m
-        # strategy). Without this, the most-recently-closed candle right at lock
-        # time (e.g. 10:10-10:15) is a candle that was already priced into the CN2
-        # decision — and it could wrongly count as the "Green" leg of the trigger
-        # before the entry loop has even started.
         timestamp = float(candle["time"])
         if timestamp > 10_000_000_000:
             timestamp /= 1000
@@ -1052,12 +1026,9 @@ class BotEngine:
         else:
             self._set(s, "trigger_wait", f"{rt.pair}: waiting for Green then Red {trigger_tf} close.")
 
-    # ---------- execution ----------
     async def _place(self, s: Strategy, rt: Runtime, price: Decimal) -> None:
         pair = rt.pair or ""
         side = rt.side or "sell"
-        # CoinDCX keeps the B-*_USDT symbol for INR-margined futures; the wallet is
-        # selected by margin_currency_short_name=INR, so the pair name never changes.
         if not self._inr_pairs:
             try:
                 self._inr_pairs = set(await trade.inr_instruments())
@@ -1072,16 +1043,6 @@ class BotEngine:
         capital = Decimal(str(max(0, s.capital_cap_inr)))
         leverage = s.leverage
 
-        # Respect the frontend-selected leverage value for every strategy. The
-        # Highest Mover Sell rule must not hardcode 2.5x and override a user's
-        # chosen live setting.
-
-        # Clamp capital to the ACTUAL free wallet balance BEFORE sizing the order —
-        # not after. Quantity used to be computed off the strategy's static capital
-        # cap (e.g. ₹40,000) and only checked against the real wallet balance right
-        # before placing the order, by which point `quantity` was already fixed. On
-        # a thin wallet this sent a market order sized for far more margin than the
-        # account actually had, and CoinDCX rejected it outright (400).
         if trade.live_enabled():
             try:
                 wallet_balance = await trade.inr_wallet_balance()
@@ -1090,8 +1051,6 @@ class BotEngine:
                 self._reset(s, rt)
                 self._set(s, "error", "Wallet balance unavailable — trade skipped.")
                 return
-            # Keep the order well inside the actual available futures margin so CoinDCX
-            # does not reject a valid signal because the wallet was nearly fully allocated.
             free_capital = wallet_balance * FEE_SAFETY_BUFFER
             conservative_capital = live_capital_limit(capital, wallet_balance)
             capital = conservative_capital if s.rule_set == "highest_mover_sell" else min(capital, conservative_capital)
@@ -1116,12 +1075,6 @@ class BotEngine:
         try:
             instrument = await self._inr_instrument(pair)
             if instrument:
-                # Snap the reference price to the instrument's tick size BEFORE it is
-                # used for sizing or sent as a limit price. `order_quantity()` already
-                # floors quantity to `quantity_increment`, but nothing was doing the
-                # equivalent for price — CoinDCX 400s any limit (and TP/SL) price that
-                # isn't an exact multiple of `price_increment`, and a raw candle-close
-                # price almost never lands on a valid tick by chance.
                 price = trade.round_price(price, instrument)
             rate = await trade.usdt_inr_rate()
             if instrument:
@@ -1130,8 +1083,6 @@ class BotEngine:
         except Exception as exc:
             self.log("error", f"Instrument sizing failed for {pair}: {exc}", s)
 
-        # A pair can be listed and still not be margin-tradable in INR; firing the order
-        # anyway is what produced CoinDCX's bare 404 not_found.
         if trade.live_enabled() and (not instrument or quantity <= 0):
             self.log(
                 "error",
@@ -1204,7 +1155,6 @@ class BotEngine:
             status="open" if market_entry else "pending",
             opened_at=now_ist().isoformat(timespec="seconds"),
         )
-        # order_id/position_id ride along as plain dict keys for restart recovery.
         payload = record.model_dump()
         payload["order_id"] = rt.order_id
         payload["position_id"] = rt.position_id
@@ -1216,11 +1166,15 @@ class BotEngine:
         rt.phase = "in_position" if market_entry else "pending_order"
         rt.order_deadline = None if market_entry else now_ist() + timedelta(seconds=order_window(s.timeframe))
         rt.last_order_check = 0.0
+
+        # FIX P0-3: Persist strategy state fields BEFORE _set() so they are saved to DB
         s.open_pair, s.open_side, s.entry_price, s.tp_price, s.sl_price = pair, side, entry, tp, sl
         window = order_window(s.timeframe)
         if market_entry:
             rt.trades_today += 1
             s.trades_today = rt.trades_today
+            # FIX: Persist trades_today immediately
+            asyncio.create_task(self._save(s))
             await self._mark_open(rt)
             self.log("trade", f"{side.upper()} MARKET FILLED on {pair} @ {entry:.8f} — position live.", s)
             self._set(s, "in_position", f"{side.upper()} market position open on {pair} — TP {price_label(tp)}, SL {price_label(sl)}.")
@@ -1235,8 +1189,6 @@ class BotEngine:
         self._set(s, "pending_order", f"{side.upper()} limit on {pair} @ {entry:.8f} — waiting for a fill.")
 
     async def _order_snapshot(self, s: Strategy, rt: Runtime) -> dict[str, Any] | None:
-        """Throttled live order-status poll. None means 'skip this tick' — either too
-        soon since the last check, or the status call itself failed."""
         if not (trade.live_enabled() and rt.order_id):
             return None
         loop_now = asyncio.get_event_loop().time()
@@ -1250,12 +1202,6 @@ class BotEngine:
             return None
 
     async def _is_filled(self, s: Strategy | None, rt: Runtime) -> bool:
-        """Return whether a pending limit order has actually filled.
-
-        In LIVE mode we must poll CoinDCX order status and ignore the paper shortcut
-        of just checking the last traded price. The status check is throttled to once
-        every 5s to avoid hammering the exchange on every tick.
-        """
         if trade.live_enabled() and rt.order_id:
             loop_now = asyncio.get_running_loop().time()
             if loop_now - rt.last_order_check < 5:
@@ -1300,21 +1246,18 @@ class BotEngine:
         rt.phase = "in_position"
         rt.trades_today += 1
         s.trades_today = rt.trades_today
+        # FIX: Persist trades_today immediately
+        asyncio.create_task(self._save(s))
         if avg_price:
             rt.entry = avg_price
             side = rt.side or "sell"
             tp_pct = 5.0 if s.rule_set == "highest_mover_sell" else s.tp_pct
             sl_pct = None if s.rule_set == "highest_mover_sell" else s.sl_pct
-            # TP/SL are recomputed off the actual average fill price, not the
-            # candle-close reference price the order was placed at.
             rt.tp, rt.sl = tp_sl_for(side, rt.entry, tp_pct, sl_pct)
         if filled_qty and rt.quantity:
             rt.capital = rt.capital * min(filled_qty / rt.quantity, 1.0)
             rt.quantity = filled_qty
 
-        # Snap TP/SL to the instrument's price tick before they are persisted or sent
-        # to the exchange — an unaligned TP/SL price 400s on attach just like an
-        # unaligned limit entry price does on order creation.
         if trade.live_enabled() and rt.pair:
             try:
                 instrument = await self._inr_instrument(rt.pair)
@@ -1343,9 +1286,6 @@ class BotEngine:
         self._set(s, "in_position", f"{side} open on {rt.pair} — TP {price_label(rt.tp)}, SL {price_label(rt.sl)}.")
 
     async def _finalize_partial_fill(self, s: Strategy, rt: Runtime, avg_price: float, qty: float) -> None:
-        """Deadline reached on a partially filled limit order — cancel the unfilled
-        remainder and open the position on whatever quantity actually filled, instead
-        of waiting on liquidity that may never show up."""
         if trade.live_enabled() and rt.order_id:
             try:
                 await trade.cancel_order(rt.order_id)
@@ -1388,168 +1328,117 @@ class BotEngine:
         self._set(s, "waiting", "Order cancelled (no fill) — waiting for the next slot.")
 
     async def _await_fill(self, s: Strategy, rt: Runtime, now: datetime) -> None:
-        """Fill the limit order inside its window. A partial fill still resting at the
-        deadline is accepted as-is: the unfilled remainder is cancelled and the position
-        opens on the quantity that actually filled, instead of waiting forever."""
         if not trade.live_enabled():
-            # PAPER: a limit fills once the market trades through it, always in full.
             ticker = store.tickers.get(rt.pair or "")
             if ticker is not None:
                 entry = rt.entry or 0.0
                 touched = ticker.last <= entry if (rt.side or "sell") == "buy" else ticker.last >= entry
                 if touched:
                     await self._on_filled(s, rt, entry, rt.quantity)
-                    return
-        else:
-            status = await self._order_snapshot(s, rt)
-            if status is not None:
-                state = str(status.get("status") or "").lower()
-                if state in ("filled", "closed"):
-                    avg = status.get("avg_price") or status.get("price")
-                    qty = filled_quantity(status, rt.quantity)
-                    rt.position_id = str(status.get("position_id") or rt.position_id or "")
-                    await self._on_filled(s, rt, float(avg) if avg else (rt.entry or 0.0), qty)
-                    return
-                if state == "partially_filled":
-                    rt.position_id = str(status.get("position_id") or rt.position_id or "")
-                    filled = filled_quantity(status, 0.0)
-                    if now >= (rt.order_deadline or now):
-                        avg = status.get("avg_price") or status.get("price")
-                        await self._finalize_partial_fill(s, rt, float(avg) if avg else (rt.entry or 0.0), filled)
-                    else:
-                        self._set(
-                            s,
-                            "pending_order",
-                            f"{(rt.side or 'sell').upper()} limit on {rt.pair} partially filled "
-                            f"({filled}/{rt.quantity}) — waiting for the rest or the deadline.",
-                        )
-                    return
-
-        if rt.order_deadline and now >= rt.order_deadline:
-            await self._cancel_unfilled(s, rt)
             return
 
-        left = int((rt.order_deadline - now).total_seconds()) if rt.order_deadline else 0
+        if rt.order_deadline and now >= rt.order_deadline:
+            status = await self._order_snapshot(s, rt) or {}
+            filled = filled_quantity(status, 0.0)
+            if filled > 0 and filled < rt.quantity:
+                avg = float(status.get("avg_execution_price") or status.get("average_price") or rt.entry or 0)
+                await self._finalize_partial_fill(s, rt, avg, filled)
+            else:
+                await self._cancel_unfilled(s, rt)
+            return
+
+        if await self._is_filled(s, rt):
+            status = await self._order_snapshot(s, rt) or {}
+            avg = float(status.get("avg_execution_price") or status.get("average_price") or rt.entry or 0)
+            filled = filled_quantity(status, rt.quantity)
+            await self._on_filled(s, rt, avg, filled)
+
+    async def _monitor(self, s: Strategy, rt: Runtime) -> None:
+        ticker = store.tickers.get(rt.pair or "")
+        if ticker is None or rt.entry is None:
+            return
+        entry = rt.entry
         side = rt.side or "sell"
-        entry = rt.entry or 0.0
-        self._set(
-            s,
-            "pending_order",
-            f"{side.upper()} limit on {rt.pair} @ {entry:.8f} — waiting for a fill ({left}s left).",
-        )
+        last = ticker.last
+        if last is None:
+            return
+        if side == "buy":
+            if rt.tp is not None and last >= rt.tp:
+                await self._on_tp_sl_hit(s, rt, "tp", last)
+                return
+            if rt.sl is not None and last <= rt.sl:
+                await self._on_tp_sl_hit(s, rt, "sl", last)
+                return
+        else:
+            if rt.tp is not None and last <= rt.tp:
+                await self._on_tp_sl_hit(s, rt, "tp", last)
+                return
+            if rt.sl is not None and last >= rt.sl:
+                await self._on_tp_sl_hit(s, rt, "sl", last)
+                return
+
+        if trade.live_enabled() and rt.position_id:
+            try:
+                pos = await trade.position_status(rt.position_id)
+                if not position_is_open(pos):
+                    self.log(
+                        "trade",
+                        f"{rt.pair}: position {rt.position_id} no longer open on exchange — treating as closed.",
+                        s,
+                    )
+                    await self._close_trade(s, rt, "closed", last, "Position closed externally (TP/SL/liquidation/manual).")
+            except Exception as exc:
+                self.log("error", f"Position status check failed for {rt.position_id}: {exc}", s)
 
     async def _mark_open(self, rt: Runtime) -> None:
         await self._update_trade(rt.trade_id, {
             "status": "open",
+            "order_id": rt.order_id,
+            "position_id": rt.position_id,
             "entry_price": rt.entry,
             "tp_price": rt.tp,
             "sl_price": rt.sl,
             "quantity": rt.quantity,
+            "leverage": rt.leverage,
             "capital_inr": rt.capital,
-            "position_id": rt.position_id,
         })
 
     def _reset(self, s: Strategy, rt: Runtime) -> None:
-        rt.phase, rt.slot, rt.pair, rt.side = "waiting", None, None, None
-        rt.order_id = rt.position_id = rt.trade_id = None
+        rt.phase = "waiting"
+        rt.pair = rt.side = rt.trade_id = rt.order_id = rt.position_id = None
         rt.entry = rt.tp = rt.sl = None
-        rt.order_deadline = None
-        rt.trigger_deadline = None
+        rt.quantity = rt.leverage = rt.capital = 0.0
+        rt.order_deadline = rt.trigger_deadline = None
         rt.seen_green_trigger = False
         rt.last_trigger_candle = None
-        s.open_pair = s.open_side = None
-        s.entry_price = s.tp_price = s.sl_price = None
+        s.open_pair = s.open_side = s.entry_price = s.tp_price = s.sl_price = None
+        asyncio.create_task(self._save(s))
 
-    async def _monitor(self, s: Strategy, rt: Runtime) -> None:
-        ticker = store.tickers.get(rt.pair or "")
-        if ticker is None or rt.entry is None or rt.tp is None:
-            return
+    async def _close_trade(self, s: Strategy, rt: Runtime, outcome: str, exit_price: float, reason: str) -> None:
+        pnl = pnl_pct_for(rt.side or "sell", rt.entry or 0.0, exit_price, rt.leverage)
+        await self._update_trade(rt.trade_id, {
+            "status": outcome,
+            "exit_price": exit_price,
+            "pnl_pct": pnl,
+            "closed_at": now_ist().isoformat(timespec="seconds"),
+            "close_reason": reason,
+        })
+        self.log("trade", f"{rt.pair} {outcome.upper()} @ {exit_price:.8f} ({percent_label(pnl)}) — {reason}", s)
+        self._reset(s, rt)
+        self._set(s, "waiting", f"Position closed — {reason}. Waiting for the next slot.")
 
-        if trade.live_enabled() and rt.position_id:
-            loop_now = asyncio.get_event_loop().time()
-            if loop_now - rt.last_order_check >= LIQUIDATION_CHECK_SECONDS:
-                rt.last_order_check = loop_now
-                still_open = True
-                pos: dict[str, Any] = {}
-                try:
-                    pos = await trade.position_status(rt.position_id) or {}
-                    still_open = position_is_open(pos)
-                except Exception as exc:
-                    self.log("error", f"Position status check failed: {exc}", s)
-                if not still_open:
-                    await self._finalize_closed_elsewhere(s, rt, pos)
-                    return
-
-        price = ticker.last
-        side = rt.side or "sell"
-        hit_tp = price >= rt.tp if side == "buy" else price <= rt.tp
-        hit_sl = rt.sl is not None and (price <= rt.sl if side == "buy" else price >= rt.sl)
-
-        if not hit_tp and not hit_sl:
-            pnl_live = pnl_pct_for(side, rt.entry, price, rt.leverage)
-            self._set(
-                s,
-                "in_position",
-                f"{side.upper()} open on {s.open_pair} — last {price:.8f}, P&L {pnl_live:+.2f}%, "
-                f"TP {price_label(rt.tp)}, SL {price_label(rt.sl)}.",
-            )
-            return
-
+    async def _on_tp_sl_hit(self, s: Strategy, rt: Runtime, kind: str, price: float) -> None:
         if trade.live_enabled() and rt.position_id:
             try:
                 await trade.exit_position(rt.position_id)
             except Exception as exc:
-                self.log("error", f"Position exit failed: {exc}", s)
+                self.log("error", f"Exit order failed for {rt.position_id}: {exc}", s)
+        await self._close_trade(s, rt, kind, price, f"{'Take profit' if kind == 'tp' else 'Stop loss'} hit.")
 
-        pnl = pnl_pct_for(side, rt.entry, price, rt.leverage)
-        pnl_inr = rt.capital * pnl / 100
-        reason = "TAKE PROFIT hit" if hit_tp else "STOP LOSS hit"
-        self.log(
-            "trade",
-            f"{reason} on {s.open_pair} ({side.upper()}) @ {price:.8f} — entry {rt.entry:.8f}, "
-            f"P&L {pnl:+.2f}% (₹{pnl_inr:+,.0f}) on margin ({trade.mode()}).",
-            s,
-        )
-        await self._update_trade(rt.trade_id, {
-            "status": "tp_hit" if hit_tp else "sl_hit",
-            "exit_price": price,
-            "pnl_pct": pnl,
-            "pnl_inr": pnl_inr,
-            "closed_at": now_ist().isoformat(timespec="seconds"),
-        })
-
-        self._reset(s, rt)
-        self._set(s, "waiting", f"{reason} — waiting for the next slot.")
-
-    async def _finalize_closed_elsewhere(self, s: Strategy, rt: Runtime, status: dict[str, Any]) -> None:
-        """Position no longer exists on the exchange (e.g. liquidated) — stop waiting
-        on TP/SL, which would otherwise never arrive, and free the strategy up for the
-        next slot instead of hanging in 'in_position' indefinitely."""
-        exit_price = status.get("exit_price") or status.get("avg_exit_price")
-        pnl_inr = status.get("pnl") or status.get("realized_pnl")
-        self.log(
-            "trade",
-            f"{s.open_pair} is no longer open on the exchange (likely liquidated) — "
-            "marking the cycle complete instead of waiting on TP/SL.",
-            s,
-        )
-        await self._update_trade(rt.trade_id, {
-            "status": "liquidated",
-            "exit_price": exit_price,
-            "pnl_inr": pnl_inr,
-            "closed_at": now_ist().isoformat(timespec="seconds"),
-        })
-        self._reset(s, rt)
-        self._set(s, "waiting", "Position closed by the exchange (liquidation) — waiting for the next slot.")
-
-
-engine = BotEngine()
-
-_user_engines: dict[str, BotEngine] = {"admin": engine}
-
-
-def get_engine(owner_id: str) -> BotEngine:
-    normalized = owner_id.strip().lower() or "admin"
-    if normalized not in _user_engines:
-        _user_engines[normalized] = BotEngine(normalized)
-    return _user_engines[normalized]
+    async def _on_liquidation(self, s: Strategy, rt: Runtime, price: float) -> None:
+        if trade.live_enabled() and rt.position_id:
+            try:
+                await trade.exit_position(rt.position_id)
+            except Exception as exc:
+                self.log("error", f"Liquidation exit failed for {rt.position_id}: {exc}", s)
+        await self._close_trade(s, rt, "liquidated", price, "Position liquidated.")

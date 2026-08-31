@@ -8,7 +8,7 @@ services:
       - key: MONGO_URI
         sync: false
       - key: DB_NAME
-        value: scalping
+        value: app
       - key: CORS_ORIGINS
         value: "*"
       - key: APP_URL

@@ -8,8 +8,9 @@ import TradeHistory from "@/pages/TradeHistory";
 import PositionMonitor from "@/pages/PositionMonitor";
 import HistoricalTesting from "@/pages/HistoricalTesting";
 
-const ADMIN_EMAIL = "admin";
-const ADMIN_PASSWORD = "kunal";
+const const [email, setEmail] = useState(ADMIN_EMAIL);
+const [password, setPassword] = useState(ADMIN_PASSWORD);
+
 
 function RabbitIcon() {
   return (

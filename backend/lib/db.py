@@ -1,32 +1,29 @@
-"""Shared Mongo handle — import `client`/`db` from here (server.py, routers, seed.py).
+"""MongoDB connection shared across the backend.
 
-This app supports either a local MongoDB instance or a cloud MongoDB URI. Set one of:
-- MONGO_URL="mongodb://localhost:27017"
-- MONGO_URL="mongodb+srv://..."  (or MONGO_URL_CLOUD / MONGO_CLOUD_URL)
-
-The first non-empty value wins; if no Mongo env is supplied, we fall back to the local
-MongoDB default used in local development.
+Uses AsyncIOMotorClient for non-blocking I/O. The database name is read from the
+MONGODB_URI (last path segment) or falls back to MONGODB_DATABASE / 'scalping_bot'.
 """
+from __future__ import annotations
 
+import logging
 import os
-from pathlib import Path
+from typing import Any
 
-from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+logger = logging.getLogger(__name__)
 
-mongo_url = (
-    os.getenv("MONGO_URL")
-    or os.getenv("MONGO_URI")
-    or os.getenv("MONGO_CLOUD_URL")
-    or os.getenv("MONGO_URL_CLOUD")
-    or "mongodb://localhost:27017"
-).strip()
+MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/scalping_bot")
+MONGODB_DATABASE = os.environ.get("MONGODB_DATABASE", "scalping_bot")
 
-if not mongo_url:
-    mongo_url = "mongodb://localhost:27017"
+# FIX P2-12: Increase timeouts from 2s to production-safe values.
+# Cloud MongoDB (Atlas) can have slow network or maintenance windows.
+# 2-second timeouts caused startup failures and connection drops.
+client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
+    MONGODB_URI,
+    serverSelectionTimeoutMS=10000,
+    connectTimeoutMS=10000,
+    socketTimeoutMS=30000,
+)
 
-db_name = os.getenv("DB_NAME", "app")
-client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=2000, connectTimeoutMS=2000, socketTimeoutMS=2000)
-db = client[db_name]
+db: AsyncIOMotorDatabase[Any] = client.get_default_database(default=MONGODB_DATABASE)

@@ -5,7 +5,7 @@ services:
     plan: free
     healthCheckPath: /api/
     envVars:
-      - key: MONGO_URL
+      - key: MONGO_URI
         sync: false
       - key: DB_NAME
         value: scalping

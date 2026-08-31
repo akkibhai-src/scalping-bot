@@ -8,10 +8,6 @@ import TradeHistory from "@/pages/TradeHistory";
 import PositionMonitor from "@/pages/PositionMonitor";
 import HistoricalTesting from "@/pages/HistoricalTesting";
 
-const const [email, setEmail] = useState(ADMIN_EMAIL);
-const [password, setPassword] = useState(ADMIN_PASSWORD);
-
-
 function RabbitIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true">
@@ -67,8 +63,8 @@ function RabbitArtwork() {
 }
 
 function LoginPage() {
-  const [email, setEmail] = useState(ADMIN_EMAIL);
-  const [password, setPassword] = useState(ADMIN_PASSWORD);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 

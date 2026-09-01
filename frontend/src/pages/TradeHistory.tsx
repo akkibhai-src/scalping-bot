@@ -83,6 +83,9 @@ export default function TradeHistory() {
   const achieved = selectedDaySummary.target_achieved;
   const selectedTrade = selectedTrades.data?.find((trade) => trade.id === selectedTradeId) ?? null;
   const selectedTradeIsRunning = selectedTrade?.status === "open" || selectedTrade?.status === "pending";
+  const themeText = isLightMode ? "text-slate-900" : "text-slate-100";
+  const themeMuted = isLightMode ? "text-slate-600" : "text-slate-400";
+  const themeCard = isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]";
 
   return (
     <div className={`flex h-screen min-h-0 flex-col overflow-hidden ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
@@ -93,8 +96,8 @@ export default function TradeHistory() {
               <History className="h-4 w-4" />
             </span>
             <div className="leading-tight">
-              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
-              <p className="num text-[9px] text-[#596273]">realised P&amp;L and daily target</p>
+              <h1 className={`font-heading text-[12px] font-bold tracking-tight ${themeText}`}>Trade History</h1>
+              <p className={`num text-[9px] ${themeMuted}`}>realised P&amp;L and daily target</p>
             </div>
           </div>
         </div>
@@ -105,7 +108,7 @@ export default function TradeHistory() {
               <History className="h-4 w-4" />
             </span>
             <div className="min-w-0 leading-tight">
-              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
+              <h1 className={`font-heading text-[12px] font-bold tracking-tight ${themeText}`}>Trade History</h1>
             </div>
           </div>
         </div>
@@ -114,14 +117,14 @@ export default function TradeHistory() {
       <main className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden lg:p-4">
         <section className="order-1 flex min-h-0 min-w-0 flex-col gap-2 md:hidden">
           <div className="grid grid-cols-3 gap-1.5">
-            <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="date-box">
-              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Date</p>
-              <p className="num mt-0.5 text-[11px] font-semibold text-[#7f9bff]">
+            <div className={`min-w-0 rounded-md border p-1.5 ${themeCard}`} data-testid="date-box">
+              <p className={`text-[7px] uppercase tracking-[0.12em] ${themeMuted}`}>Date</p>
+              <p className={`num mt-0.5 text-[11px] font-semibold ${isLightMode ? "text-[#3d5ef5]" : "text-[#7f9bff]"}`}>
                 {selectedDaySummary.date ?? "—"}
               </p>
             </div>
-            <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="today-pnl-box">
-              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">P&amp;L</p>
+            <div className={`min-w-0 rounded-md border p-1.5 ${themeCard}`} data-testid="today-pnl-box">
+              <p className={`text-[7px] uppercase tracking-[0.12em] ${themeMuted}`}>P&amp;L</p>
               <p
                 className={cn(
                   "num mt-0.5 text-[11px] font-semibold",
@@ -138,7 +141,7 @@ export default function TradeHistory() {
                 achieved ? "border-[#00c076]/50 bg-[#00c076]/[0.08]" : "border-[#ff455b]/40 bg-[#ff455b]/[0.06]",
               )}
             >
-              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">
+              <p className={`text-[7px] uppercase tracking-[0.12em] ${themeMuted}`}>
                 {achieved ? "Achieved" : "Not achieved"}
               </p>
               <p
@@ -165,8 +168,8 @@ export default function TradeHistory() {
                   <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 </span>
                 <div>
-                  <h2 className="font-heading text-[11px] font-semibold text-slate-100 md:text-xs">Calendar</h2>
-                  <p className="mt-0.5 text-[9px] text-slate-500 md:text-[10px]">Select a date for trade review</p>
+                  <h2 className={`font-heading text-[11px] font-semibold ${themeText} md:text-xs`}>Calendar</h2>
+                  <p className={`mt-0.5 text-[9px] ${themeMuted} md:text-[10px]`}>Select a date for trade review</p>
                 </div>
               </div>
               <span className="num text-[9px] text-slate-400 md:text-[10px]">{calendarOpen ? "Hide" : "Show"}</span>
@@ -184,8 +187,8 @@ export default function TradeHistory() {
           <section className={`mt-1.5 overflow-hidden rounded-lg border md:mt-2 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="calendar-trades-section">
             <div className={`flex items-center justify-between border-b px-2.5 py-1.5 md:px-3 md:py-2 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
               <div>
-                <h2 className="font-heading text-[11px] font-semibold text-slate-100 md:text-sm">Trades on {selectedDate}</h2>
-                <p className="mt-0.5 text-[9px] text-slate-500 md:text-[10px]">Select a trade to view its complete position details.</p>
+                <h2 className={`font-heading text-[11px] font-semibold ${themeText} md:text-sm`}>Trades on {selectedDate}</h2>
+                <p className={`mt-0.5 text-[9px] ${themeMuted} md:text-[10px]`}>Select a trade to view its complete position details.</p>
               </div>
               <span className="num text-[10px] text-slate-500" data-testid="today-trade-count">
                 {selectedTrades.data?.length ?? 0} logged

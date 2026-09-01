@@ -25,12 +25,14 @@ function MonthPanel({
   byDate,
   selectedDate,
   onSelectDate,
+  isLightMode,
 }: {
   year: number;
   month: number;
   byDate: Map<string, DayPnl>;
   selectedDate: string;
   onSelectDate: (date: string) => void;
+  isLightMode: boolean;
 }) {
   return (
     <div className="min-w-[150px] flex-1" data-testid="calendar-month" data-month={`${year}-${month + 1}`}>
@@ -68,7 +70,7 @@ function MonthPanel({
               className={cn(
                 "num grid h-5 place-items-center rounded text-[9px] transition-colors duration-150",
                 tone,
-                selected && "ring-1 ring-[#7f9bff] ring-offset-1 ring-offset-[#0d111a]",
+                selected && (isLightMode ? "ring-1 ring-[#7f9bff] ring-offset-1 ring-offset-[var(--card)]" : "ring-1 ring-[#7f9bff] ring-offset-1 ring-offset-[#0d111a]"),
               )}
               onClick={() => onSelectDate(key)}
             >
@@ -92,6 +94,7 @@ export default function PnlCalendar({
 }) {
   const [offset, setOffset] = useState(0);
   const byDate = useMemo(() => new Map(days.map((d) => [d.date, d])), [days]);
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
 
   const base = new Date();
   base.setDate(1);
@@ -100,9 +103,9 @@ export default function PnlCalendar({
   second.setMonth(second.getMonth() + 1);
 
   return (
-    <div className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2">
+    <div className={`rounded-lg border p-2 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
       <div className="mb-1.5 flex items-center justify-between">
-        <h2 className="font-heading text-xs font-semibold text-slate-100">Calendar</h2>
+        <h2 className={`font-heading text-xs font-semibold ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>Calendar</h2>
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -130,6 +133,7 @@ export default function PnlCalendar({
           byDate={byDate}
           selectedDate={selectedDate}
           onSelectDate={onSelectDate}
+          isLightMode={isLightMode}
         />
         <MonthPanel
           year={second.getFullYear()}
@@ -137,6 +141,7 @@ export default function PnlCalendar({
           byDate={byDate}
           selectedDate={selectedDate}
           onSelectDate={onSelectDate}
+          isLightMode={isLightMode}
         />
       </div>
 

@@ -40,6 +40,7 @@ export default function BotControl() {
   const selected = strategies.find((s) => s.id === selectedId) ?? null;
   const botOn = state?.bot_on ?? false;
   const live = state?.execution_mode === "LIVE";
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["bot-state"] });
 
@@ -95,8 +96,8 @@ export default function BotControl() {
 
 
   return (
-    <div className="terminal-shell flex h-screen flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+    <div className={`terminal-shell flex h-screen flex-col overflow-hidden ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
         <div className="hidden md:flex md:w-full md:items-center md:gap-2">
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded bg-[#00c076]/15 text-[#00c076]">
@@ -212,9 +213,9 @@ export default function BotControl() {
           </div>
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 md:hidden">
+        <div className={`flex w-full items-center justify-between gap-3 md:hidden ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>
           <div className="flex min-w-0 items-center gap-2">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md border shadow-sm ${isLightMode ? "border-[#dfeaf3] bg-[#f8fbff] text-[#4b5563]" : "border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563]"}`}>
               <Bot className="h-4 w-4" />
             </span>
             <div className="min-w-0 leading-tight">
@@ -250,7 +251,7 @@ export default function BotControl() {
         </div>
       </header>
 
-      <div className="grid min-h-[52px] grid-cols-4 items-center gap-2 border-b border-[#1e293b] bg-[#111827]/80 px-2 py-2 md:hidden">
+      <div className={`grid min-h-[52px] grid-cols-4 items-center gap-2 border-b px-2 py-2 md:hidden ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#111827]/80"}`}>
         <button
           type="button"
           onClick={() => toggleBot.mutate(!botOn)}
@@ -258,7 +259,9 @@ export default function BotControl() {
             "flex items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[9px] font-medium",
             botOn
               ? "border-[#00c076]/40 bg-[#00c076]/10 text-[#00c076]"
-              : "border-slate-500/40 bg-slate-500/10 text-slate-300",
+              : isLightMode
+                ? "border-[#dfeaf3] bg-[var(--background)] text-slate-700"
+                : "border-slate-500/40 bg-slate-500/10 text-slate-300",
           )}
           aria-label={botOn ? "Turn bot off" : "Turn bot on"}
         >
@@ -279,7 +282,7 @@ export default function BotControl() {
 
         <button
           type="button"
-          className="flex items-center justify-center gap-1.5 rounded-md border border-[#1e293b] bg-[#0b0e14] px-2 py-1.5 text-[9px] font-medium text-slate-200"
+          className={`flex items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[9px] font-medium ${isLightMode ? "border-[#dfeaf3] bg-[var(--background)] text-slate-700" : "border-[#1e293b] bg-[#0b0e14] text-slate-200"}`}
           onClick={() => {
             const addButton = document.querySelector(
               '[data-testid="add-strategy-trigger"], [data-testid="add-strategy-button"]',
@@ -301,7 +304,9 @@ export default function BotControl() {
             "flex shrink-0 items-center gap-3 border-b px-4 py-1 text-[11px] md:py-1.5",
             state?.credentials_configured
               ? "border-[#00c076]/20 bg-[#00c076]/[0.06] text-[#6ee7b7]"
-              : "border-amber-500/20 bg-amber-500/[0.06] text-amber-300",
+              : isLightMode
+                ? "border-amber-500/20 bg-amber-500/[0.06] text-amber-700"
+                : "border-amber-500/20 bg-amber-500/[0.06] text-amber-300",
           )}
         >
           <span className="min-w-0 flex-1">
@@ -340,7 +345,7 @@ export default function BotControl() {
 
       <footer
         data-testid="scanning-footer"
-        className="num hidden h-9 shrink-0 items-center justify-between border-t border-[#1e293b] bg-[#090c11] px-4 text-[11px] text-slate-400 md:flex"
+        className={`num hidden h-9 shrink-0 items-center justify-between border-t px-4 text-[11px] md:flex ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-600" : "border-[#1e293b] bg-[#090c11] text-slate-400"}`}
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />

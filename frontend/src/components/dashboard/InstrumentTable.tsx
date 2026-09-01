@@ -25,6 +25,7 @@ function SortHead({
   align,
   testid,
   className,
+  isLightMode,
   onSort,
 }: {
   label: string;
@@ -34,12 +35,14 @@ function SortHead({
   align?: "right";
   testid: string;
   className?: string;
+  isLightMode: boolean;
   onSort: (key: SortKey) => void;
 }) {
   return (
     <th
       className={cn(
-        "sticky top-0 z-10 select-none bg-[#0e131f] px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400",
+        "sticky top-0 z-10 select-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wider",
+        isLightMode ? "bg-[var(--background)] text-slate-600" : "bg-[#0e131f] text-slate-400",
         align === "right" ? "text-right" : "text-left",
         className,
       )}
@@ -49,8 +52,8 @@ function SortHead({
         data-testid={testid}
         onClick={() => onSort(sortKey)}
         className={cn(
-          "inline-flex items-center gap-1 transition-colors duration-150 hover:text-slate-100",
-          active && "text-[#00c076]",
+          "inline-flex items-center gap-1 transition-colors duration-150",
+          active ? "text-[#00c076]" : isLightMode ? "hover:text-slate-900" : "hover:text-slate-100",
         )}
       >
         {label}
@@ -69,6 +72,7 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
   const [desc, setDesc] = useState(true);
   const prev = useRef<Map<string, number>>(new Map());
   const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
 
   const showLeverageColumn = instruments.some((t) => (t.max_leverage ?? 0) > 0);
 
@@ -113,9 +117,9 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
-      <div className="flex items-center gap-2 border-b border-[#1e293b] px-2.5 py-1.5 md:py-2.5">
-        <h2 className="mr-auto min-w-0 shrink-0 font-heading text-[12px] font-semibold tracking-tight text-slate-100 md:text-sm">
+    <div className={`flex h-full min-h-0 flex-col overflow-hidden rounded-lg border ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
+      <div className={`flex items-center gap-2 border-b px-2.5 py-1.5 md:py-2.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
+        <h2 className={`mr-auto min-w-0 shrink-0 font-heading text-[12px] font-semibold tracking-tight md:text-sm ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>
           Active USDT Futures
         </h2>
         <div className="relative w-[160px] flex-none sm:w-[230px] md:flex-1 md:max-w-[320px]">
@@ -125,7 +129,7 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by symbol"
-            className="h-7 w-full border-[#1e293b] bg-[#0b0e14] pl-8 pr-8 text-[10px] num placeholder:text-slate-600 md:h-8 md:text-[11px]"
+            className={`h-7 w-full pl-8 pr-8 text-[10px] num md:h-8 md:text-[11px] ${isLightMode ? "border-[#dfeaf3] bg-[var(--background)] text-slate-800 placeholder:text-slate-500" : "border-[#1e293b] bg-[#0b0e14] text-slate-200 placeholder:text-slate-600"}`}
           />
           {query ? (
             <button
@@ -140,7 +144,7 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         </div>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto border-b border-[#1e293b] px-2.5 py-1.5">
+      <div className={`flex gap-1 overflow-x-auto border-b px-2.5 py-1.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -150,8 +154,12 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
             className={cn(
               "shrink-0 rounded-md border px-2 py-[3px] text-[10px] font-medium leading-none transition-all duration-150 md:px-3 md:py-1.5 md:text-[11px]",
               filter === f.key
-                ? "border-[#334155] bg-[#1e293b] text-white"
-                : "border-transparent bg-transparent text-slate-400 hover:border-[#334155] hover:text-slate-200",
+                ? isLightMode
+                  ? "border-[#dfeaf3] bg-[var(--background)] text-slate-900"
+                  : "border-[#334155] bg-[#1e293b] text-white"
+                : isLightMode
+                  ? "border-transparent bg-transparent text-slate-600 hover:border-[#dfeaf3] hover:text-slate-900"
+                  : "border-transparent bg-transparent text-slate-400 hover:border-[#334155] hover:text-slate-200",
             )}
           >
             {f.label}
@@ -163,15 +171,15 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         <table className="w-full min-w-[520px] table-fixed border-collapse text-[10px] leading-none md:min-w-[980px] md:text-xs" role="table" aria-label="Active USDT Futures Instruments">
           <thead>
             <tr>
-              <SortHead label={isMobile && showLeverageColumn ? "Instrument · Lev" : "Instrument"} sortKey="symbol" active={sortKey === "symbol"} desc={desc} testid="sort-symbol-button" onSort={onSort} />
+              <SortHead label={isMobile && showLeverageColumn ? "Instrument · Lev" : "Instrument"} sortKey="symbol" active={sortKey === "symbol"} desc={desc} testid="sort-symbol-button" isLightMode={isLightMode} onSort={onSort} />
               {showLeverageColumn ? (
-                <SortHead label="Max Lev." sortKey="max_leverage" active={sortKey === "max_leverage"} desc={desc} align="right" testid="sort-leverage-button" className="hidden md:table-cell" onSort={onSort} />
+                <SortHead label="Max Lev." sortKey="max_leverage" active={sortKey === "max_leverage"} desc={desc} align="right" testid="sort-leverage-button" className="hidden md:table-cell" isLightMode={isLightMode} onSort={onSort} />
               ) : null}
-              <SortHead label="Last" sortKey="last" active={sortKey === "last"} desc={desc} align="right" testid="sort-price-button" onSort={onSort} />
-              <SortHead label="24H %" sortKey="change_pct" active={sortKey === "change_pct"} desc={desc} align="right" testid="sort-change-button" onSort={onSort} />
-              <SortHead label="24H H" sortKey="high" active={sortKey === "high"} desc={desc} align="right" testid="sort-high-button" onSort={onSort} />
-              <SortHead label="24H L" sortKey="low" active={sortKey === "low"} desc={desc} align="right" testid="sort-low-button" onSort={onSort} />
-              <SortHead label="Vol" sortKey="volume" active={sortKey === "volume"} desc={desc} align="right" testid="sort-volume-button" onSort={onSort} />
+              <SortHead label="Last" sortKey="last" active={sortKey === "last"} desc={desc} align="right" testid="sort-price-button" isLightMode={isLightMode} onSort={onSort} />
+              <SortHead label="24H %" sortKey="change_pct" active={sortKey === "change_pct"} desc={desc} align="right" testid="sort-change-button" isLightMode={isLightMode} onSort={onSort} />
+              <SortHead label="24H H" sortKey="high" active={sortKey === "high"} desc={desc} align="right" testid="sort-high-button" isLightMode={isLightMode} onSort={onSort} />
+              <SortHead label="24H L" sortKey="low" active={sortKey === "low"} desc={desc} align="right" testid="sort-low-button" isLightMode={isLightMode} onSort={onSort} />
+              <SortHead label="Vol" sortKey="volume" active={sortKey === "volume"} desc={desc} align="right" testid="sort-volume-button" isLightMode={isLightMode} onSort={onSort} />
             </tr>
           </thead>
           <tbody>
@@ -187,8 +195,9 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                   data-testid="instrument-row"
                   data-pair={t.pair}
                   className={cn(
-                    "cursor-pointer border-b border-[#141c29] transition-colors duration-150 hover:bg-[#1e293b]",
-                    (rows.indexOf(t) + 1) % 2 === 0 ? "bg-[#0f172a]/20" : "bg-transparent",
+                    "cursor-pointer border-b transition-colors duration-150",
+                    isLightMode ? "border-[#edf3f9] hover:bg-[#eef3fb]" : "border-[#141c29] hover:bg-[#1e293b]",
+                    (rows.indexOf(t) + 1) % 2 === 0 ? (isLightMode ? "bg-[#f4f8fd]" : "bg-[#0f172a]/20") : "bg-transparent",
                   )}
                 >
                   <td className="px-2 py-1.5 md:px-3 md:py-1.5">

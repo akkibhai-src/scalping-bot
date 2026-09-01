@@ -24,6 +24,7 @@ export default function TradeHistory() {
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
 
   useEffect(() => {
     const updateView = () => setIsMobile(window.innerWidth < 768);
@@ -86,8 +87,8 @@ export default function TradeHistory() {
   const selectedTradeIsRunning = selectedTrade?.status === "open" || selectedTrade?.status === "pending";
 
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+    <div className={`flex h-screen min-h-0 flex-col overflow-hidden ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
         <div className="hidden md:flex md:w-full md:items-center md:gap-2">
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded bg-[#ff455b]/15 text-[#ff455b]">
@@ -120,9 +121,9 @@ export default function TradeHistory() {
           </div>
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 md:hidden">
+        <div className={`flex w-full items-center justify-between gap-3 md:hidden ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>
           <div className="flex min-w-0 items-center gap-2">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md border shadow-sm ${isLightMode ? "border-[#dfeaf3] bg-[#f8fbff] text-[#4b5563]" : "border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563]"}`}>
               <History className="h-4 w-4" />
             </span>
             <div className="min-w-0 leading-tight">
@@ -147,19 +148,19 @@ export default function TradeHistory() {
       <main className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden lg:p-4">
         <section className="order-1 flex min-h-0 min-w-0 flex-col gap-2 md:hidden">
           <div className="grid grid-cols-4 gap-1.5">
-            <div className="min-w-0 rounded-md border border-[#1e293b] bg-[#0d111a] p-1.5" data-testid="date-box">
+            <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="date-box">
               <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Date</p>
               <p className="num mt-0.5 text-[11px] font-semibold text-[#7f9bff]">
                 {selectedDaySummary.date ?? "—"}
               </p>
             </div>
-            <div className="min-w-0 rounded-md border border-[#1e293b] bg-[#0d111a] p-1.5" data-testid="running-trade-box">
+            <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="running-trade-box">
               <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Running</p>
               <p className="num mt-0.5 text-[11px] font-semibold text-slate-100">
                 {selectedDaySummary.trades_done}/{selectedDaySummary.max_trades}
               </p>
             </div>
-            <div className="min-w-0 rounded-md border border-[#1e293b] bg-[#0d111a] p-1.5" data-testid="today-pnl-box">
+            <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="today-pnl-box">
               <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">P&amp;L</p>
               <p
                 className={cn(
@@ -193,7 +194,7 @@ export default function TradeHistory() {
         </section>
 
         <section className="order-2 min-h-0 lg:order-2 lg:overflow-y-auto">
-          <div className="rounded-lg border border-[#1e293b] bg-[#0d111a]">
+          <div className={`rounded-lg border ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
             <button
               type="button"
               onClick={() => setCalendarOpen((value) => !value)}
@@ -211,7 +212,7 @@ export default function TradeHistory() {
               <span className="num text-[9px] text-slate-400 md:text-[10px]">{calendarOpen ? "Hide" : "Show"}</span>
             </button>
             {calendarOpen ? (
-              <div className="border-t border-[#1e293b] p-1.5 md:p-2">
+              <div className={`border-t p-1.5 md:p-2 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
                 <PnlCalendar
                   days={daily.data ?? []}
                   selectedDate={selectedDate}
@@ -220,8 +221,8 @@ export default function TradeHistory() {
               </div>
             ) : null}
           </div>
-          <section className="mt-1.5 overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a] md:mt-2" data-testid="calendar-trades-section">
-            <div className="flex items-center justify-between border-b border-[#1e293b] px-2.5 py-1.5 md:px-3 md:py-2">
+          <section className={`mt-1.5 overflow-hidden rounded-lg border md:mt-2 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="calendar-trades-section">
+            <div className={`flex items-center justify-between border-b px-2.5 py-1.5 md:px-3 md:py-2 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
               <div>
                 <h2 className="font-heading text-[11px] font-semibold text-slate-100 md:text-sm">Trades on {selectedDate}</h2>
                 <p className="mt-0.5 text-[9px] text-slate-500 md:text-[10px]">Select a trade to view its complete position details.</p>
@@ -256,7 +257,7 @@ export default function TradeHistory() {
         <section className="flex min-h-0 min-w-0 flex-col gap-2 lg:overflow-y-auto">
 
           {selectedTrade && !selectedTradeIsRunning ? (
-            <section className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2.5" data-testid="selected-trade-details">
+            <section className={`rounded-lg border p-2.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="selected-trade-details">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="font-heading text-sm font-semibold text-slate-100">Trade details</h2>
                 <span className="num text-[11px] text-slate-500">{selectedTrade.pair.replace("B-", "")}</span>
@@ -275,7 +276,7 @@ export default function TradeHistory() {
 
       <footer
         data-testid="scanning-footer"
-        className="num flex h-9 shrink-0 items-center justify-between border-t border-[#1e293b] bg-[#090c11] px-4 text-[11px] text-slate-400"
+        className={`num flex h-9 shrink-0 items-center justify-between border-t px-4 text-[11px] ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-600" : "border-[#1e293b] bg-[#090c11] text-slate-400"}`}
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />

@@ -8,6 +8,7 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
   const endRef = useRef<HTMLDivElement | null>(null);
   const shouldFollowLive = useRef(true);
   const [selectedStrategy, setSelectedStrategy] = useState("all");
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
 
   useEffect(() => {
     if (shouldFollowLive.current) {
@@ -118,15 +119,15 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
     : logs.filter((log) => log.strategy_id === selectedStrategy);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
-      <div className="flex items-center justify-between border-b border-[#1e293b] px-2.5 py-1.5 sm:px-3 sm:py-2.5">
-        <h2 className="font-heading text-[11px] font-semibold text-slate-100 sm:text-sm">Live Log Console</h2>
+    <div className={`flex h-full min-h-0 flex-col overflow-hidden rounded-lg border ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
+      <div className={`flex items-center justify-between border-b px-2.5 py-1.5 sm:px-3 sm:py-2.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
+        <h2 className={`font-heading text-[11px] font-semibold sm:text-sm ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>Live Log Console</h2>
         <span className="num text-[9px] text-slate-500 sm:text-[11px]" data-testid="log-count">
           {visibleLogs.length} events
         </span>
       </div>
 
-      <div className="flex min-w-0 gap-1 overflow-x-auto border-b border-[#1e293b] bg-[#0a0f18] px-2 py-1" role="tablist" aria-label="Strategy logs">
+      <div className={`flex min-w-0 gap-1 overflow-x-auto border-b px-2 py-1 ${isLightMode ? "border-[#dfeaf3] bg-[#f1f7fd]" : "border-[#1e293b] bg-[#0a0f18]"}`} role="tablist" aria-label="Strategy logs">
         <button
           type="button"
           role="tab"

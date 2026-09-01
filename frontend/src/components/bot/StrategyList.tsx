@@ -16,10 +16,12 @@ export default function StrategyList({
   onToggleEnabled: (strategy: Strategy) => void;
   onEdit: (strategy: Strategy) => void;
 }) {
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
+
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
-      <div className="flex items-center justify-between border-b border-[#1e293b] px-2 py-1.5 sm:px-3 sm:py-2.5">
-        <h2 className="font-heading text-[12px] font-semibold text-slate-100 sm:text-sm">Strategies</h2>
+    <div className={`flex h-full min-h-0 flex-col overflow-hidden rounded-lg border ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
+      <div className={`flex items-center justify-between border-b px-2 py-1.5 sm:px-3 sm:py-2.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
+        <h2 className={`font-heading text-[12px] font-semibold sm:text-sm ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>Strategies</h2>
         <span className="num text-[9px] text-slate-500 sm:text-[11px]" data-testid="strategy-count">
           {strategies.length} configured
         </span>
@@ -46,7 +48,9 @@ export default function StrategyList({
                       "flex h-full min-h-[150px] w-full cursor-pointer flex-col rounded-md border px-1.25 py-1 text-left transition-colors duration-150 sm:min-h-[160px] sm:px-1.5 sm:py-1.25",
                       selected
                         ? "border-[#00c076]/50 bg-[#00c076]/[0.06]"
-                        : "border-[#1e293b] bg-[#111724] hover:border-slate-600",
+                        : isLightMode
+                          ? "border-[#dfeaf3] bg-[var(--background)] hover:border-[#c8d8ea]"
+                          : "border-[#1e293b] bg-[#111724] hover:border-slate-600",
                     )}
                   >
                     <div className="flex items-start gap-1.5">

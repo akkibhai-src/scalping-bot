@@ -382,6 +382,8 @@ function ProfilePage({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dis
   const [profile, setProfile] = useState<ProfileInfo>(() => getSavedProfile());
   const [overview, setOverview] = useState(() => getTradingOverview());
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
+  const [tradingOverviewOpen, setTradingOverviewOpen] = useState(false);
+  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
 
   const handleChange = (field: keyof ProfileInfo, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -549,66 +551,83 @@ function ProfilePage({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dis
               </div>
 
               <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>
-                <div className={`mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}>
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Trading Overview</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setTradingOverviewOpen((value) => !value)}
+                  className={`mb-3 flex w-full items-center justify-between gap-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Trading Overview</span>
+                  </span>
+                  {tradingOverviewOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
-                    <div className={`text-lg font-bold ${strongText}`}>{overview.trades}</div>
-                    <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Trades</div>
+                {tradingOverviewOpen ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
+                      <div className={`text-lg font-bold ${strongText}`}>{overview.trades}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Trades</div>
+                    </div>
+                    <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
+                      <div className={`text-lg font-bold ${strongText}`}>{overview.wins}</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Wins</div>
+                    </div>
+                    <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
+                      <div className="text-lg font-bold text-[#27d189]">{overview.winRate}%</div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Win Rate</div>
+                    </div>
                   </div>
-                  <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
-                    <div className={`text-lg font-bold ${strongText}`}>{overview.wins}</div>
-                    <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Wins</div>
-                  </div>
-                  <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
-                    <div className="text-lg font-bold text-[#27d189]">{overview.winRate}%</div>
-                    <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Win Rate</div>
-                  </div>
-                </div>
+                ) : null}
               </div>
 
               <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>
-                <div className={`mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}>
-                  <Shield className="h-3.5 w-3.5" />
-                  <span>Account Settings</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setAccountSettingsOpen((value) => !value)}
+                  className={`mb-3 flex w-full items-center justify-between gap-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5" />
+                    <span>Account Settings</span>
+                  </span>
+                  {accountSettingsOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
 
-                <div className="space-y-2">
-                  {[
-                    ["Preferences", "✨"],
-                    ["API Keys", "🔐"],
-                    ["Notifications", "🔔"],
-                    ["Dark Mode", "🌙"],
-                    ["Currency", "₹"],
-                    ["Security", "🛡️"],
-                  ].map(([label, icon], index) => {
-                    const isDarkModeRow = label === "Dark Mode";
-                    return (
-                      <div key={label} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${panelClasses}`}>
-                        <div className="flex items-center gap-3">
-                          <span className="text-base">{icon}</span>
-                          <span className={`text-sm font-medium ${strongText}`}>{label}</span>
+                {accountSettingsOpen ? (
+                  <div className="space-y-2">
+                    {[
+                      ["API Keys", "🔐"],
+                      ["Notifications", "🔔"],
+                      ["Dark Mode", "🌙"],
+                      ["Currency", "₹"],
+                      ["Security", "🛡️"],
+                    ].map(([label, icon], index) => {
+                      const isDarkModeRow = label === "Dark Mode";
+                      return (
+                        <div key={label} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${panelClasses}`}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-base">{icon}</span>
+                            <span className={`text-sm font-medium ${strongText}`}>{label}</span>
+                          </div>
+
+                          {isDarkModeRow ? (
+                            <button
+                              type="button"
+                              onClick={handleThemeToggle}
+                              aria-label="Toggle dark mode"
+                              className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-[#17b26a]" : "bg-[#dfeaf3]"}`}
+                            >
+                              <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
+                            </button>
+                          ) : index < 4 ? (
+                            <ChevronRight className={`h-4 w-4 ${mutedText}`} />
+                          ) : null}
                         </div>
-
-                        {isDarkModeRow ? (
-                          <button
-                            type="button"
-                            onClick={handleThemeToggle}
-                            aria-label="Toggle dark mode"
-                            className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-[#17b26a]" : "bg-[#dfeaf3]"}`}
-                          >
-                            <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
-                          </button>
-                        ) : index < 5 ? (
-                          <ChevronRight className={`h-4 w-4 ${mutedText}`} />
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               <button

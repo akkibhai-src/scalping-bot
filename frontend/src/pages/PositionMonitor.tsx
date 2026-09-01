@@ -448,7 +448,7 @@ export default function PositionMonitor() {
 
       <footer
         data-testid="scanning-footer"
-        className={`num flex h-9 shrink-0 items-center justify-between border-t px-4 text-[11px] ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-700" : "border-[#1e293b] bg-[#090c11] text-slate-400"}`}
+        className={`num hidden h-9 shrink-0 items-center justify-between border-t px-4 text-[11px] md:flex ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-700" : "border-[#1e293b] bg-[#090c11] text-slate-400"}`}
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />

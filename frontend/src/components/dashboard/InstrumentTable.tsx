@@ -120,8 +120,8 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
   };
 
   return (
-    <div className={`flex h-full min-h-0 flex-col overflow-hidden rounded-lg border ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
-      <div className={`flex items-center gap-2 border-b px-2.5 py-1.5 md:py-2.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
+    <div className={`flex h-full min-h-0 flex-col overflow-hidden rounded-lg border ${isMobile ? "max-h-[520px]" : ""} ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
+      <div className={`flex items-center gap-2 border-b px-2 py-1 md:px-2.5 md:py-1.5 md:py-2.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
         <h2 className={`mr-auto min-w-0 shrink-0 font-heading text-[12px] font-semibold tracking-tight md:text-sm ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>
           Active USDT Futures
         </h2>
@@ -147,7 +147,7 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         </div>
       </div>
 
-      <div className={`flex gap-1 overflow-x-auto border-b px-2.5 py-1.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
+      <div className={`flex gap-1 overflow-x-auto border-b px-2 py-1 md:px-2.5 md:py-1.5 ${isLightMode ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -203,10 +203,10 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                     (rows.indexOf(t) + 1) % 2 === 0 ? (isLightMode ? "bg-[#f4f8fd]" : "bg-[#0f172a]/20") : "bg-transparent",
                   )}
                 >
-                  <td className="px-2 py-1.5 md:px-3 md:py-1.5">
+                  <td className="px-1.5 py-1 md:px-3 md:py-1.5">
                     <div className="flex items-center justify-between gap-1.5">
                       <div className="min-w-0">
-                        <span className={cn("num block text-[11px] font-semibold md:text-[12px]", textPrimary)}>{t.symbol}</span>
+                        <span className={cn("num block text-[10px] font-semibold md:text-[12px]", textPrimary)}>{t.symbol}</span>
                       </div>
                     </div>
                   </td>

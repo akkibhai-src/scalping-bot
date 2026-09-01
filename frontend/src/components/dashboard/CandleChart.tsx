@@ -36,6 +36,7 @@ export default function CandleChart({
 }) {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const candleSeriesRef = useRef<CandleSeriesHandle | null>(null);
+  const isLightMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches && document.documentElement.dataset.theme === "light";
 
   useEffect(() => {
     const container = chartRef.current;
@@ -47,25 +48,25 @@ export default function CandleChart({
       width: fixedWidth,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: "#0b0e14" },
-        textColor: "#64748b",
+        background: { type: ColorType.Solid, color: isLightMobile ? "#edf3f9" : "#0b0e14" },
+        textColor: isLightMobile ? "#475569" : "#64748b",
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: 10,
       },
       grid: {
-        vertLines: { color: "#172033" },
-        horzLines: { color: "#172033" },
+        vertLines: { color: isLightMobile ? "#dfeaf3" : "#172033" },
+        horzLines: { color: isLightMobile ? "#dfeaf3" : "#172033" },
       },
       crosshair: {
-        vertLine: { color: "#64748b", width: 1, style: 3, labelBackgroundColor: "#334155" },
-        horzLine: { color: "#64748b", width: 1, style: 3, labelBackgroundColor: "#334155" },
+        vertLine: { color: isLightMobile ? "#94a3b8" : "#64748b", width: 1, style: 3, labelBackgroundColor: isLightMobile ? "#e2e8f0" : "#334155" },
+        horzLine: { color: isLightMobile ? "#94a3b8" : "#64748b", width: 1, style: 3, labelBackgroundColor: isLightMobile ? "#e2e8f0" : "#334155" },
       },
       rightPriceScale: {
-        borderColor: "#263247",
+        borderColor: isLightMobile ? "#cbd5e1" : "#263247",
         scaleMargins: { top: 0.08, bottom: 0.25},
       },
       timeScale: {
-        borderColor: "#263247",
+        borderColor: isLightMobile ? "#cbd5e1" : "#263247",
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 2,
@@ -154,7 +155,7 @@ export default function CandleChart({
     return (
       <div
         data-testid="candle-chart-empty"
-        className="flex items-center justify-center rounded border border-dashed border-[#1e293b] bg-[#0b0e14] text-[10px] text-slate-600"
+        className={`flex items-center justify-center rounded border border-dashed text-[10px] ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)] text-slate-600" : "border-[#1e293b] bg-[#0b0e14] text-slate-600"}`}
         style={{ height: `${height}px` }}
       >
         {loading ? "Loading candles..." : "No candle data for this timeframe"}
@@ -168,7 +169,7 @@ export default function CandleChart({
         ref={chartRef}
         data-testid="candle-chart"
         aria-label="Interactive candlestick chart"
-        className="h-full w-full overflow-hidden rounded bg-[#0b0e14]"
+        className={`h-full w-full overflow-hidden rounded ${isLightMobile ? "bg-[var(--background)]" : "bg-[#0b0e14]"}`}
         style={{ touchAction: "none", pointerEvents: "auto" }}
       />
     </div>

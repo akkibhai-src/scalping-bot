@@ -49,6 +49,8 @@ function StatChip({ label, value, tone }: { label: string; value: string; tone?:
 export default function Dashboard() {
   const { snapshot, state, ticks } = useMarketStream();
   const [timeframes, setTimeframes] = useState<Record<string, Resolution>>(loadTimeframes);
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  const isLightMobile = isMobile && document.documentElement.dataset.theme === "light";
 
   useEffect(() => {
     const id = setInterval(() => { void istClock(); }, 1000);
@@ -61,8 +63,8 @@ export default function Dashboard() {
   const worst = instruments[instruments.length - 1];
 
   return (
-    <div className="terminal-shell flex h-screen flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+    <div className={`terminal-shell flex h-screen flex-col overflow-hidden ${isLightMobile ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMobile ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
         <div className="flex min-w-0 items-center gap-2">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
             <Activity className="h-4 w-4" />
@@ -150,26 +152,26 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="mt-0 grid grid-cols-4 gap-1 border-b border-[#1e293b] bg-[#111827]/80 px-1.5 py-1 sm:hidden">
-        <div className="rounded-md border border-[#1e293b] bg-[#0b0e14] px-1 py-0.5 text-center">
+      <div className={`mt-0 grid grid-cols-4 gap-1 border-b px-1.5 py-1 sm:hidden ${isLightMobile ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#111827]/80"}`}>
+        <div className={`rounded-md border px-1 py-0.5 text-center ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)]" : "border-[#1e293b] bg-[#0b0e14]"}`}>
           <div className="text-[6.5px] uppercase tracking-[0.16em] text-slate-500">Pairs</div>
-          <div className="num mt-0.5 text-[10px] font-semibold text-slate-100">{snapshot?.count ?? 0}</div>
+          <div className={`num mt-0.5 text-[10px] font-semibold ${isLightMobile ? "text-slate-900" : "text-slate-100"}`}>{snapshot?.count ?? 0}</div>
         </div>
-        <div className="rounded-md border border-[#1e293b] bg-[#0b0e14] px-1 py-0.5 text-center">
+        <div className={`rounded-md border px-1 py-0.5 text-center ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)]" : "border-[#1e293b] bg-[#0b0e14]"}`}>
           <div className="text-[6.5px] uppercase tracking-[0.16em] text-slate-500">Top Gainer</div>
           <div className="num mt-0.5 text-[8.5px] font-semibold text-[#00c076]">
             {best ? `${best.symbol} ${fmtPct(best.change_pct)}` : "—"}
           </div>
         </div>
-        <div className="rounded-md border border-[#1e293b] bg-[#0b0e14] px-1 py-0.5 text-center">
+        <div className={`rounded-md border px-1 py-0.5 text-center ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)]" : "border-[#1e293b] bg-[#0b0e14]"}`}>
           <div className="text-[6.5px] uppercase tracking-[0.16em] text-slate-500">Top Loser</div>
           <div className="num mt-0.5 text-[8.5px] font-semibold text-[#ff455b]">
             {worst ? `${worst.symbol} ${fmtPct(worst.change_pct)}` : "—"}
           </div>
         </div>
-        <div className="rounded-md border border-[#1e293b] bg-[#0b0e14] px-1 py-0.5 text-center">
+        <div className={`rounded-md border px-1 py-0.5 text-center ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)]" : "border-[#1e293b] bg-[#0b0e14]"}`}>
           <div className="text-[6.5px] uppercase tracking-[0.16em] text-slate-500">Frames</div>
-          <div className="num mt-0.5 text-[10px] font-semibold text-slate-100">{ticks}</div>
+          <div className={`num mt-0.5 text-[10px] font-semibold ${isLightMobile ? "text-slate-900" : "text-slate-100"}`}>{ticks}</div>
         </div>
       </div>
 
@@ -183,9 +185,9 @@ export default function Dashboard() {
           role="region"
           aria-label="Top 4 Crypto Gainers"
         >
-          <div className="flex items-center gap-2 px-0.5">
+          <div className={`flex items-center gap-2 px-0.5 ${isLightMobile ? "text-slate-900" : "text-slate-100"}`}>
             <TrendingUp className="h-3.5 w-3.5 text-[#00c076]" />
-            <h2 className="font-heading text-[11px] font-semibold tracking-tight text-slate-100 sm:text-sm">
+            <h2 className={`font-heading text-[11px] font-semibold tracking-tight sm:text-sm ${isLightMobile ? "text-slate-900" : "text-slate-100"}`}>
               Top 4 Movers · Live OHLC
             </h2>
             <span className="num ml-auto text-[9px] text-slate-500 sm:text-[10px]">re-ranked every second</span>

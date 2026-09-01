@@ -40,6 +40,7 @@ export default function TopGainerBox({
   const [expanded, setExpanded] = useState(false);
   const [zoom, setZoom] = useState(1);
   const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  const isLightMobile = isMobile && document.documentElement.dataset.theme === "light";
   const up = ticker.change_pct >= 0;
   const accent = RANK_ACCENT[rank - 1] ?? "#00C076";
   const chartHeight = expanded ? Math.round((isMobile ? 170 : 260) * zoom) : isMobile ? 34 : 76;
@@ -78,7 +79,8 @@ export default function TopGainerBox({
         }
       }}
       className={cn(
-        "flex min-h-0 w-full max-w-full flex-col gap-0.5 overflow-hidden rounded-lg border border-[#1e293b] bg-[#111724] p-1.25 transition-[border-color] duration-200 hover:border-[#00c076]/40 sm:gap-1.5 sm:p-2 md:gap-2 md:p-2.5",
+        "flex min-h-0 h-full w-full max-w-full flex-col gap-0.5 overflow-hidden rounded-lg border p-1.25 transition-[border-color] duration-200 hover:border-[#00c076]/40 sm:gap-1.5 sm:p-2 md:gap-2 md:p-2.5",
+        isLightMobile ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#111724]",
         expanded && "fixed inset-3 z-50 overflow-y-auto shadow-2xl shadow-black/60 sm:inset-5 lg:inset-8",
       )}
       style={{
@@ -87,24 +89,24 @@ export default function TopGainerBox({
     >
       <div className="flex min-w-0 items-center justify-between gap-2 border-b border-[#1e293b]/60 pb-1">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="num text-[9px] font-semibold text-white sm:text-[11px] md:text-[13px]" data-testid="top-box-symbol">
+          <span className={`num text-[9px] font-semibold sm:text-[11px] md:text-[13px] ${isLightMobile ? "text-slate-900" : "text-white"}`} data-testid="top-box-symbol">
             {ticker.symbol}
           </span>
-          <span className="num rounded border border-[#1e293b] bg-[#0b0e14] px-1 py-0.5 text-[6.5px] text-slate-300 sm:text-[7px]">
+          <span className={`num rounded border px-1 py-0.5 text-[6.5px] sm:text-[7px] ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)] text-slate-700" : "border-[#1e293b] bg-[#0b0e14] text-slate-300"}`}>
             {ticker.max_leverage ? `${ticker.max_leverage}x` : "—"}
           </span>
         </div>
 
         <div className="flex min-w-0 items-center gap-1.5">
           <div className="min-w-0 text-right">
-            <div className="text-[6px] uppercase tracking-[0.08em] text-slate-500">Last</div>
-            <span className="num block truncate text-[9px] font-semibold leading-none text-white sm:text-[11px] md:text-[17px]" data-testid="top-box-price">
+            <div className={`text-[6px] uppercase tracking-[0.08em] ${isLightMobile ? "text-slate-500" : "text-slate-500"}`}>Last</div>
+            <span className={`num block truncate text-[9px] font-semibold leading-none sm:text-[11px] md:text-[17px] ${isLightMobile ? "text-slate-900" : "text-white"}`} data-testid="top-box-price">
               {fmtPrice(ticker.last)}
             </span>
           </div>
 
           <div className="min-w-0 text-right">
-            <div className="text-[6px] uppercase tracking-[0.08em] text-slate-500">24H</div>
+            <div className={`text-[6px] uppercase tracking-[0.08em] ${isLightMobile ? "text-slate-500" : "text-slate-500"}`}>24H</div>
             <span
               data-testid="top-box-change"
               className={cn(
@@ -170,7 +172,7 @@ export default function TopGainerBox({
       </div>
 
       <div
-        className="rounded-md border border-[#1e293b] bg-[#0b0e14] p-0.5"
+        className={`rounded-md border p-0.5 ${isLightMobile ? "border-[#dfeaf3] bg-[var(--background)]" : "border-[#1e293b] bg-[#0b0e14]"}`}
         role="group"
         aria-label={`Timeframe for ${ticker.symbol}`}
         data-testid="timeframe-selector"
@@ -206,14 +208,14 @@ export default function TopGainerBox({
         height={chartHeight}
       />
 
-      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 border-t border-[#1e293b] pt-1 sm:gap-x-3 sm:gap-y-1 sm:pt-2">
+      <div className={`grid grid-cols-2 gap-x-2 gap-y-0.5 border-t pt-1 sm:gap-x-3 sm:gap-y-1 sm:pt-2 ${isLightMobile ? "border-[#dfeaf3]" : "border-[#1e293b]"}`}>
         <Metric label="Open" value={fmtPrice(ticker.open)} />
         <Metric label="High" value={fmtPrice(ticker.high)} tone="up" />
         <Metric label="Low" value={fmtPrice(ticker.low)} tone="down" />
         <Metric label="Close" value={fmtPrice(ticker.last)} />
       </div>
 
-      <div className="num flex items-center justify-between gap-1 text-[6.5px] text-slate-500 sm:text-[8px] md:text-[10px]">
+      <div className={`num flex items-center justify-between gap-1 text-[6.5px] sm:text-[8px] md:text-[10px] ${isLightMobile ? "text-slate-500" : "text-slate-500"}`}>
         <span className="truncate">Vol {fmtCompact(ticker.volume)}</span>
         <span className="truncate">Funding {(ticker.funding_rate * 100).toFixed(4)}%</span>
       </div>

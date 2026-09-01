@@ -434,197 +434,189 @@ function ProfilePage() {
     .join("") || "U";
 
   const isDark = theme === "dark";
-  const shellClasses = isDark ? "bg-[#040d1a] text-slate-100" : "bg-[#edf3f9] text-[#101827]";
-  const panelClasses = isDark ? "border-[#1d2d42] bg-[#071926]" : "border-[#d7e0ea] bg-[#f9fbfd]";
-  const innerPanelClasses = isDark ? "border-[#21344a] bg-[#0a1624]" : "border-[#dfeaf3] bg-[#ffffff]";
+  const shellClasses = isDark ? "bg-[#0b1117] text-slate-100" : "bg-[#edf3f9] text-slate-900";
+  const panelClasses = isDark ? "border-[#1d2d42] bg-[#0d1724]" : "border-[#dfeaf3] bg-white";
+  const innerPanelClasses = isDark ? "border-[#203043] bg-[#101d2d]" : "border-[#e7edf5] bg-[#f9fbff]";
   const mutedText = isDark ? "text-slate-400" : "text-slate-600";
   const strongText = isDark ? "text-white" : "text-slate-900";
   const secondaryText = isDark ? "text-slate-300" : "text-slate-700";
 
   return (
     <div className={`flex h-screen flex-col ${shellClasses}`}>
-      <header className={`flex h-14 shrink-0 items-center border-b px-4 md:hidden ${isDark ? "border-[#1d2d42] bg-[#071926] text-[#eaf1ff]" : "border-[#dbe5f1] bg-[#f4f8fc] text-[#101827]"}`}>
+      <header className={`flex h-14 shrink-0 items-center border-b px-4 md:hidden ${isDark ? "border-[#1d2d42] bg-[#0d1724] text-slate-100" : "border-[#dfeaf3] bg-white text-slate-900"}`}>
         <button
           type="button"
           onClick={() => window.history.back()}
-          className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full border ${isDark ? "border-[#2d4052] bg-[#0b1420] text-slate-200" : "border-[#cfe0f0] bg-white text-[#101827]"}`}
+          className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full border ${isDark ? "border-[#2a3b50] bg-[#111f2d] text-slate-200" : "border-[#dfeaf3] bg-[#f7fafc] text-slate-700"}`}
           aria-label="Go back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <h1 className={`font-heading text-[21px] font-semibold tracking-tight ${strongText}`}>Profile</h1>
+        <h1 className="font-heading text-[20px] font-semibold tracking-tight text-inherit">Profile</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-3 py-3 md:px-6 md:py-5">
-        <div className="mx-auto max-w-[420px]">
-          <div className={`mb-4 rounded-[18px] border p-4 shadow-[0_10px_26px_rgba(2,8,20,0.32)] ${panelClasses}`}>
-            <div className="flex flex-col items-center justify-center pb-2 pt-2">
-              <div className="relative grid h-24 w-24 place-items-center rounded-full border-[3px] border-[#24b67a] bg-[#0d1d2a] text-3xl font-bold text-slate-100">
+      <main className="flex-1 overflow-y-auto px-3 py-3 md:px-5 md:py-5">
+        <div className="mx-auto max-w-[440px]">
+          <div className={`overflow-hidden rounded-2xl border shadow-[0_10px_26px_rgba(2,8,20,0.18)] ${panelClasses}`}>
+            <div className={`flex items-center gap-3 border-b p-4 ${isDark ? "border-[#1d2d42]" : "border-[#edf2f8]"}`}>
+              <div className="grid h-14 w-14 place-items-center rounded-full border border-[#2ecc71] bg-[#132a20] text-lg font-bold text-white">
                 {initials}
-                <span className="absolute -bottom-1 right-1 rounded-full border border-[#0d1d2a] bg-[#24b67a] px-1.5 py-0.5 text-[7px] font-bold text-[#06151d]">
-                  101
-                </span>
               </div>
-              <div className="mt-4 text-center">
-                <h2 className={`text-[28px] font-bold ${strongText}`}>{displayName}</h2>
-                <p className={`mt-1 text-sm ${mutedText}`}>{displayEmail || "No email added yet"}</p>
+
+              <div className="min-w-0">
+                <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${mutedText}`}>
+                  Account
+                </p>
+                <h2 className={`truncate text-xl font-semibold ${strongText}`}>
+                  {displayName}
+                </h2>
+                <p className={`truncate text-sm ${mutedText}`}>
+                  {displayEmail}
+                </p>
               </div>
             </div>
-          </div>
 
-          <div className={`mb-4 rounded-[18px] border p-3 ${panelClasses}`}>
-            <div className={`mb-3 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
-              <UserRound className="h-3.5 w-3.5 text-[#9ab8ff]" />
-              <span>Personal Info</span>
-            </div>
-
-            <form onSubmit={handleSaveProfile} className="space-y-3">
-              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
-                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
-                  <span className="flex items-center gap-2"><UserRound className="h-3.5 w-3.5" /> Full Name</span>
+            <div className="space-y-4 p-4">
+              <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>
+                <div className={`mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}>
+                  <UserRound className="h-3.5 w-3.5" />
+                  <span>Personal Info</span>
                 </div>
-                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
-                  <span className="text-xl text-slate-200">👤</span>
-                  <input
-                    value={profile.name}
-                    onChange={(event) => handleChange("name", event.target.value)}
-                    placeholder="Enter your name"
-                    className={`w-full bg-transparent text-[16px] font-bold outline-none placeholder:text-slate-500 ${strongText}`}
-                  />
+
+                <form onSubmit={handleSaveProfile} className="space-y-3">
+                  <label className="block">
+                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Full Name</span>
+                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                      <UserRound className={`h-4 w-4 ${mutedText}`} />
+                      <input
+                        value={profile.name}
+                        onChange={(event) => handleChange("name", event.target.value)}
+                        placeholder="Enter your name"
+                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                      />
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Email</span>
+                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                      <Mail className={`h-4 w-4 ${mutedText}`} />
+                      <input
+                        value={profile.email}
+                        onChange={(event) => handleChange("email", event.target.value)}
+                        placeholder="user@coindcx.com"
+                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                      />
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Phone Number</span>
+                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                      <Phone className={`h-4 w-4 ${mutedText}`} />
+                      <input
+                        value={profile.phone}
+                        onChange={(event) => handleChange("phone", event.target.value)}
+                        placeholder="+91 98765 43210"
+                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                      />
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Date of Birth</span>
+                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                      <CalendarDays className={`h-4 w-4 ${mutedText}`} />
+                      <input
+                        value={profile.age}
+                        onChange={(event) => handleChange("age", event.target.value)}
+                        placeholder="25 years old"
+                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                      />
+                    </div>
+                  </label>
+
+                  <button
+                    type="submit"
+                    className={`mt-1 w-full rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isDark ? "bg-[#17b26a] text-[#04130e] hover:bg-[#1cd57d]" : "bg-[#12a466] text-white hover:bg-[#15bb6f]"}`}
+                  >
+                    Save profile
+                  </button>
+                </form>
+              </div>
+
+              <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>
+                <div className={`mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Trading Overview</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
+                    <div className={`text-lg font-bold ${strongText}`}>{overview.trades}</div>
+                    <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Trades</div>
+                  </div>
+                  <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
+                    <div className={`text-lg font-bold ${strongText}`}>{overview.wins}</div>
+                    <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Wins</div>
+                  </div>
+                  <div className={`rounded-xl border p-3 text-center ${panelClasses}`}>
+                    <div className="text-lg font-bold text-[#27d189]">{overview.winRate}%</div>
+                    <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Win Rate</div>
+                  </div>
                 </div>
               </div>
 
-              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
-                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
-                  <span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email Address</span>
+              <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>
+                <div className={`mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}>
+                  <Shield className="h-3.5 w-3.5" />
+                  <span>Account Settings</span>
                 </div>
-                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
-                  <span className="text-xl text-slate-200">✉️</span>
-                  <input
-                    value={profile.email}
-                    onChange={(event) => handleChange("email", event.target.value)}
-                    placeholder="user@coindcx.com"
-                    className={`w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                  />
-                </div>
-                <p className={`mt-2 text-[12px] ${mutedText}`}>Email cannot be changed. Contact support for updates.</p>
-              </div>
 
-              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
-                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
-                  <span className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> Phone Number</span>
-                </div>
-                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
-                  <span className="text-xl text-slate-200">📞</span>
-                  <input
-                    value={profile.phone}
-                    onChange={(event) => handleChange("phone", event.target.value)}
-                    placeholder="+91 98765 43210"
-                    className={`w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                  />
-                </div>
-              </div>
+                <div className="space-y-2">
+                  {[
+                    ["Preferences", "✨"],
+                    ["API Keys", "🔐"],
+                    ["Notifications", "🔔"],
+                    ["Dark Mode", "🌙"],
+                    ["Currency", "₹"],
+                    ["Security", "🛡️"],
+                  ].map(([label, icon], index) => {
+                    const isDarkModeRow = label === "Dark Mode";
+                    return (
+                      <div key={label} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${panelClasses}`}>
+                        <div className="flex items-center gap-3">
+                          <span className="text-base">{icon}</span>
+                          <span className={`text-sm font-medium ${strongText}`}>{label}</span>
+                        </div>
 
-              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
-                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
-                  <span className="flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" /> Date of Birth</span>
-                </div>
-                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
-                  <span className="text-xl text-slate-200">🎂</span>
-                  <input
-                    value={profile.age}
-                    onChange={(event) => handleChange("age", event.target.value)}
-                    placeholder="25 years old"
-                    className={`w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                  />
+                        {isDarkModeRow ? (
+                          <button
+                            type="button"
+                            onClick={handleThemeToggle}
+                            aria-label="Toggle dark mode"
+                            className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-[#17b26a]" : "bg-[#dfeaf3]"}`}
+                          >
+                            <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
+                          </button>
+                        ) : index < 5 ? (
+                          <ChevronRight className={`h-4 w-4 ${mutedText}`} />
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               <button
-                type="submit"
-                className={`mt-2 w-full rounded-xl px-3 py-2.5 text-sm font-semibold shadow-[0_10px_20px_rgba(23,178,106,0.24)] transition ${isDark ? "bg-[#17b26a] text-[#04130e] hover:bg-[#1cd57d]" : "bg-[#12a466] text-white hover:bg-[#15bb6f]"}`}
+                type="button"
+                onClick={handleLogout}
+                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm font-medium ${panelClasses} ${strongText}`}
               >
-                Save profile
+                <span className="flex items-center gap-3"><span className="text-base">🔒</span>Logout</span>
+                <ChevronRight className={`h-4 w-4 ${mutedText}`} />
               </button>
-            </form>
-          </div>
-
-          <div className={`mb-4 rounded-[18px] border p-3 ${panelClasses}`}>
-            <div className={`mb-3 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
-              <Sparkles className="h-3.5 w-3.5 text-[#9ab8ff]" />
-              <span>Trading Overview</span>
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className={`rounded-xl border p-3 text-center ${innerPanelClasses}`}>
-                <div className={`text-[18px] font-bold ${strongText}`}>{overview.trades}</div>
-                <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Trades</div>
-              </div>
-              <div className={`rounded-xl border p-3 text-center ${innerPanelClasses}`}>
-                <div className={`text-[18px] font-bold ${strongText}`}>{overview.wins}</div>
-                <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Wins</div>
-              </div>
-              <div className={`rounded-xl border p-3 text-center ${innerPanelClasses}`}>
-                <div className="text-[18px] font-bold text-[#27d189]">{overview.winRate}%</div>
-                <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Win Rate</div>
-              </div>
-            </div>
-          </div>
-
-          <div className={`mb-4 rounded-[18px] border p-3 ${panelClasses}`}>
-            <div className={`mb-2 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
-              <Shield className="h-3.5 w-3.5 text-[#9ab8ff]" />
-              <span>Account Settings</span>
-            </div>
-
-            <div className="space-y-2">
-              {[
-                ["Preferences", "✨"],
-                ["API Keys", "🔐"],
-                ["Notifications", "🔔"],
-                ["Dark Mode", "🌙"],
-                ["Currency", "₹"],
-                ["Security", "🛡️"],
-              ].map(([label, icon], index) => {
-                const isDarkModeRow = label === "Dark Mode";
-                return (
-                  <div key={label} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{icon}</span>
-                      <span className={`text-[15px] font-medium ${strongText}`}>{label}</span>
-                    </div>
-                    {isDarkModeRow ? (
-                      <button
-                        type="button"
-                        onClick={handleThemeToggle}
-                        aria-label="Toggle dark mode"
-                        className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-[#17b26a]" : "bg-[#dfeaf3]"}`}
-                      >
-                        <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
-                      </button>
-                    ) : index < 5 ? (
-                      <ChevronRight className={`h-4 w-4 ${mutedText}`} />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className={`rounded-[18px] border p-3 ${panelClasses}`}>
-            <div className={`mb-2 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
-              <span className={`h-2 w-2 rounded-full ${isDark ? "bg-[#ff5757]" : "bg-[#ef4444]"}`} />
-              <span>Session</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[15px] font-medium ${innerPanelClasses} ${strongText}`}
-            >
-              <span className="flex items-center gap-3"><span className="text-lg">🔒</span>Logout</span>
-              <ChevronRight className={`h-4 w-4 ${mutedText}`} />
-            </button>
           </div>
         </div>
       </main>

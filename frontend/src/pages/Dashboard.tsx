@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, Bot, History, Home, LogOut, Radar, Radio, TrendingDown, TrendingUp } from "lucide-react";
-import ApiKeysDialog from "@/components/bot/ApiKeysDialog";
+import { Activity, Bot, History, LogOut, TrendingUp } from "lucide-react";
 import InstrumentTable from "@/components/dashboard/InstrumentTable";
 import TopGainerBox from "@/components/dashboard/TopGainerBox";
-import { buttonVariants } from "@/components/ui/button";
 import { useMarketStream } from "@/hooks/useMarketStream";
 import { fmtPct } from "@/lib/types";
 import type { Resolution, Ticker } from "@/lib/types";
@@ -51,10 +49,9 @@ function StatChip({ label, value, tone }: { label: string; value: string; tone?:
 export default function Dashboard() {
   const { snapshot, state, ticks } = useMarketStream();
   const [timeframes, setTimeframes] = useState<Record<string, Resolution>>(loadTimeframes);
-  const [clock, setClock] = useState(istClock);
 
   useEffect(() => {
-    const id = setInterval(() => setClock(istClock()), 1000);
+    const id = setInterval(() => { void istClock(); }, 1000);
     return () => clearInterval(id);
   }, []);
 

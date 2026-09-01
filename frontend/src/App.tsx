@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ArrowLeft, Bot, CalendarDays, ChevronDown, ChevronRight, Globe2, History, Home, Mail, Phone, Radar, Shield, Sparkles, UserRound } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
-import ApiKeysDialog from "@/components/bot/ApiKeysDialog";
 import Dashboard from "@/pages/Dashboard";
 import BotControl from "@/pages/BotControl";
 import TradeHistory from "@/pages/TradeHistory";
@@ -427,8 +426,6 @@ function ProfilePage() {
 
   const displayName = profile.name.trim() || "User";
   const displayEmail = profile.email.trim() || "user@coindcx.com";
-  const displayPhone = profile.phone.trim() || "+91 98765 43210";
-  const displayAge = profile.age.trim() || "25 years old";
   const initials = displayName
     .split(" ")
     .filter(Boolean)

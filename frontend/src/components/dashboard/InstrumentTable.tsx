@@ -181,7 +181,6 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
               const tickDown = before !== undefined && t.last < before;
               prev.current.set(t.pair, t.last);
               const up = t.change_pct >= 0;
-              const limitedRange = !Number.isFinite(t.high) || !Number.isFinite(t.low) || t.high === t.low || (t.high <= 0 && t.low <= 0);
               return (
                 <tr
                   key={t.pair}

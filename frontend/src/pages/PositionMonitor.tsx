@@ -29,6 +29,7 @@ function PositionChart({ position }: { position: LivePosition }) {
   const [resolution, setResolution] = useState<string>("1m");
   const chartRef = useRef<HTMLDivElement | null>(null);
   const isFirstRenderRef = useRef(true);
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
   const series = useQuery({
     queryKey: ["position-candles", position.pair, resolution],
     queryFn: () =>
@@ -184,10 +185,10 @@ function PositionChart({ position }: { position: LivePosition }) {
   }, [candles, levels, position.entry_price, position.tp_price, position.sl_price, position.last_price]);
 
   const chartControls = (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e293b] bg-[#0d111a] px-3 py-2">
+    <div className={`flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
       <div>
-        <span className="text-[10px] uppercase tracking-wider text-slate-500">Price chart · IST+5:30</span>
-        <span className="num ml-3 text-[10px] text-slate-500">TradingView-style candles</span>
+        <span className={`text-[10px] uppercase tracking-wider ${isLightMode ? "text-slate-600" : "text-slate-500"}`}>Price chart · IST+5:30</span>
+        <span className={`num ml-3 text-[10px] ${isLightMode ? "text-slate-600" : "text-slate-500"}`}>TradingView-style candles</span>
       </div>
       <div className="flex gap-1 overflow-x-auto">
         {CHART_RESOLUTIONS.map((option) => (
@@ -199,7 +200,7 @@ function PositionChart({ position }: { position: LivePosition }) {
               "rounded px-2 py-1 text-[10px]",
               resolution === option
                 ? "bg-[#00c076]/15 text-[#00c076]"
-                : "text-slate-500 hover:bg-[#1e293b] hover:text-slate-200",
+                : isLightMode ? "text-slate-600 hover:bg-[#eaf1f8] hover:text-slate-900" : "text-slate-500 hover:bg-[#1e293b] hover:text-slate-200",
             )}
           >
             {option}
@@ -211,9 +212,9 @@ function PositionChart({ position }: { position: LivePosition }) {
 
   if (candles.length < 2) {
     return (
-      <div data-testid="position-chart-empty" className="overflow-hidden rounded-xl border border-[#1e293b] bg-[#0b0e14] shadow-[0_18px_45px_rgba(15,23,42,0.32)]">
+      <div data-testid="position-chart-empty" className={`overflow-hidden rounded-xl border shadow-[0_18px_45px_rgba(15,23,42,0.32)] ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0b0e14]"}`}>
         {chartControls}
-        <div className="grid h-[420px] place-items-center text-xs text-slate-500">
+        <div className={`grid h-[420px] place-items-center text-xs ${isLightMode ? "text-slate-600" : "text-slate-500"}`}>
           Loading candles for {position.symbol}…
         </div>
       </div>
@@ -221,7 +222,7 @@ function PositionChart({ position }: { position: LivePosition }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#1e293b] bg-[#0b0e14] shadow-[0_18px_45px_rgba(15,23,42,0.32)]">
+    <div className={`overflow-hidden rounded-xl border shadow-[0_18px_45px_rgba(15,23,42,0.32)] ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0b0e14]"}`}>
       {chartControls}
       <div ref={chartRef} data-testid="position-chart" className="h-[420px] w-full" />
     </div>
@@ -229,13 +230,15 @@ function PositionChart({ position }: { position: LivePosition }) {
 }
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "up" | "down" }) {
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
+
   return (
-    <div className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2.5">
-      <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
+    <div className={`rounded-lg border p-1.5 sm:p-2.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
+      <p className={`text-[8px] uppercase tracking-wider sm:text-[10px] ${isLightMode ? "text-slate-600" : "text-slate-500"}`}>{label}</p>
       <p
         className={cn(
-          "num mt-0.5 text-[13px] font-semibold",
-          tone === "up" ? "text-[#00c076]" : tone === "down" ? "text-[#ff455b]" : "text-slate-100",
+          "num mt-0.5 text-[10px] font-semibold sm:text-[13px]",
+          tone === "up" ? "text-[#00c076]" : tone === "down" ? "text-[#ff455b]" : isLightMode ? "text-slate-900" : "text-slate-100",
         )}
       >
         {value}
@@ -245,6 +248,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "up
 }
 
 function PositionCard({ position }: { position: LivePosition }) {
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
   const long = position.side === "buy";
   const pnl = position.pnl_inr ?? 0;
   const pending = position.state === "pending_order";
@@ -253,44 +257,44 @@ function PositionCard({ position }: { position: LivePosition }) {
     <article
       data-testid="position-card"
       data-pair={position.pair}
-      className="flex flex-col gap-4 rounded-2xl border border-[#1e293b] bg-[#111724] p-4 shadow-[0_18px_45px_rgba(15,23,42,0.24)]"
+      className={`flex flex-col gap-3 rounded-2xl border p-3 shadow-[0_18px_45px_rgba(15,23,42,0.24)] sm:gap-4 sm:p-4 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#111724]"}`}
     >
-      <header className="flex flex-wrap items-center gap-2">
-        <span className="num text-[15px] font-bold text-white" data-testid="position-symbol">
+      <header className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <span className={`num text-[12px] font-bold sm:text-[15px] ${isLightMode ? "text-slate-900" : "text-white"}`} data-testid="position-symbol">
           {position.symbol}
         </span>
         <span
           data-testid="position-side"
           className={cn(
-            "num rounded px-1.5 py-0.5 text-[10px] font-bold",
+            "num rounded px-1.5 py-0.5 text-[8px] font-bold sm:text-[10px]",
             long ? "bg-[#00c076]/12 text-[#00c076]" : "bg-[#ff455b]/12 text-[#ff455b]",
           )}
         >
           {long ? "LONG / BUY" : "SHORT / SELL"}
         </span>
-        <span className="num rounded bg-[#1e293b] px-1.5 py-0.5 text-[10px] text-slate-300">
+        <span className={`num rounded px-1.5 py-0.5 text-[8px] sm:text-[10px] ${isLightMode ? "bg-[#eef3fb] text-slate-700" : "bg-[#1e293b] text-slate-300"}`}>
           {position.timeframe}
         </span>
-        <span className="num rounded bg-[#1e293b] px-1.5 py-0.5 text-[10px] text-slate-300">
+        <span className={`num rounded px-1.5 py-0.5 text-[8px] sm:text-[10px] ${isLightMode ? "bg-[#eef3fb] text-slate-700" : "bg-[#1e293b] text-slate-300"}`}>
           {position.leverage}x
         </span>
         <span
           data-testid="position-state"
           className={cn(
-            "num rounded px-1.5 py-0.5 text-[10px] font-semibold",
+            "num rounded px-1.5 py-0.5 text-[8px] font-semibold sm:text-[10px]",
             pending ? "bg-[#2e5cff]/15 text-[#7f9bff]" : "bg-[#00c076]/12 text-[#00c076]",
           )}
         >
           {pending ? `ORDER PENDING${position.order_deadline_ist ? ` · until ${position.order_deadline_ist}` : ""}` : "POSITION LIVE"}
         </span>
-        <span className="num ml-auto text-[10px] text-slate-500">
+        <span className={`num ml-auto text-[8px] sm:text-[10px] ${isLightMode ? "text-slate-600" : "text-slate-500"}`}>
           {position.strategy_name} · {position.mode}
         </span>
       </header>
 
       <PositionChart position={position} />
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-4 gap-1 sm:gap-2">
         <Stat label="Entry" value={fmtPrice(position.entry_price)} />
         <Stat label="Last" value={position.last_price ? fmtPrice(position.last_price) : "—"} />
         <Stat label="Take profit" value={fmtPrice(position.tp_price)} tone="up" />
@@ -314,6 +318,7 @@ function PositionCard({ position }: { position: LivePosition }) {
 export default function PositionMonitor() {
   const [tick, setTick] = useState(0);
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
   const { positions: streamedPositions } = useBotStream();
 
   const positions = useQuery({
@@ -346,16 +351,16 @@ export default function PositionMonitor() {
   ) ?? list[0];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0b0e14] text-slate-100">
-      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+    <div className={`flex min-h-screen flex-col ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
         <div className="hidden md:flex md:w-full md:items-center md:gap-2">
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded bg-[#f5c451]/15 text-[#f5c451]">
               <Radar className="h-4 w-4" />
             </span>
             <div className="leading-tight">
-              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Live Position Monitor</h1>
-              <p className="num text-[9px] text-[#596273]">
+              <h1 className={`font-heading text-[12px] font-bold tracking-tight ${isLightMode ? "text-slate-900" : "text-[#17202a]"}`}>Live Position Monitor</h1>
+              <p className={`num text-[9px] ${isLightMode ? "text-slate-600" : "text-[#596273]"}`}>
                 entry · TP · SL on the candles, refreshed every second
               </p>
             </div>
@@ -370,13 +375,13 @@ export default function PositionMonitor() {
                 {list.length} live
               </span>
             ) : null}
-            <span className="num text-[11px] text-slate-500" data-testid="monitor-heartbeat">
+            <span className={`num text-[11px] ${isLightMode ? "text-slate-600" : "text-slate-500"}`} data-testid="monitor-heartbeat">
               tick {tick}
             </span>
             <Link
               to="/"
               data-testid="scanner-link"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-300"}`)}
               aria-label="Scanner dashboard"
               title="Scanner dashboard"
             >
@@ -385,7 +390,7 @@ export default function PositionMonitor() {
             <Link
               to="/history"
               data-testid="history-link"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-300"}`)}
               aria-label="Trade history"
               title="Trade history"
             >
@@ -394,7 +399,7 @@ export default function PositionMonitor() {
             <Link
               to="/testing"
               data-testid="historical-testing-link"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-200"}`)}
               aria-label="Historical testing"
               title="Historical testing"
             >
@@ -403,7 +408,7 @@ export default function PositionMonitor() {
             <Link
               to="/bot"
               data-testid="bot-link"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-200"}`)}
               aria-label="Strategy control"
               title="Strategy control"
             >
@@ -418,7 +423,7 @@ export default function PositionMonitor() {
               <Radar className="h-4 w-4" />
             </span>
             <div className="min-w-0 leading-tight">
-              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Live Position</h1>
+              <h1 className={`font-heading text-[12px] font-bold tracking-tight ${isLightMode ? "text-slate-900" : "text-[#17202a]"}`}>Live Position</h1>
             </div>
           </div>
 
@@ -435,7 +440,7 @@ export default function PositionMonitor() {
             <Link
               to="/"
               data-testid="scanner-link"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-300"}`)}
               aria-label="Scanner dashboard"
               title="Scanner dashboard"
             >
@@ -444,7 +449,7 @@ export default function PositionMonitor() {
             <Link
               to="/history"
               data-testid="history-link"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-300"}`)}
               aria-label="Trade history"
               title="Trade history"
             >
@@ -453,7 +458,7 @@ export default function PositionMonitor() {
             <Link
               to="/bot"
               data-testid="bot-link"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), `h-7 w-7 p-0 ${isLightMode ? "text-slate-700" : "text-slate-200"}`)}
               aria-label="Strategy control"
               title="Strategy control"
             >
@@ -467,11 +472,11 @@ export default function PositionMonitor() {
         {list.length === 0 ? (
           <div
             data-testid="no-positions-state"
-            className="grid flex-1 place-items-center rounded-xl border border-dashed border-[#1e293b] bg-[#0d111a] p-10 text-center"
+            className={`grid flex-1 place-items-center rounded-xl border border-dashed p-10 text-center ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}
           >
             <div>
-              <p className="font-heading text-sm font-semibold text-slate-200">No live position right now</p>
-              <p className="mt-1 max-w-md text-xs leading-relaxed text-slate-500">
+              <p className={`font-heading text-sm font-semibold ${isLightMode ? "text-slate-900" : "text-slate-200"}`}>No live position right now</p>
+              <p className={`mt-1 max-w-md text-xs leading-relaxed ${isLightMode ? "text-slate-600" : "text-slate-500"}`}>
                 When a strategy places its limit order, this page shows the coin's candles with
                 entry, take-profit and stop-loss lines, plus live P&amp;L — and keeps monitoring
                 until the position closes.
@@ -481,7 +486,7 @@ export default function PositionMonitor() {
         ) : (
           <>
             <div
-              className="flex min-w-0 gap-1 overflow-x-auto rounded-lg border border-[#1e293b] bg-[#0d111a] p-1.5"
+              className={`flex min-w-0 gap-1 overflow-x-auto rounded-lg border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}
               role="tablist"
               aria-label="Live positions"
               data-testid="position-tabs"
@@ -501,12 +506,12 @@ export default function PositionMonitor() {
                       "flex min-w-[150px] shrink-0 items-center gap-2 rounded-md px-3 py-2 text-left transition-colors",
                       active
                         ? "border border-[#00c076]/40 bg-[#00c076]/[0.08]"
-                        : "border border-transparent hover:bg-[#151e2d]",
+                        : isLightMode ? "border border-transparent hover:bg-[#edf3fa]" : "border border-transparent hover:bg-[#151e2d]",
                     )}
                   >
                     <span className="num text-[10px] text-[#7f9bff]">{index + 1}</span>
                     <span className="min-w-0">
-                      <span className="num block truncate text-[11px] font-semibold text-slate-100">
+                      <span className={`num block truncate text-[11px] font-semibold ${isLightMode ? "text-slate-900" : "text-slate-100"}`}>
                         {position.symbol}
                       </span>
                       <span className={cn(
@@ -516,7 +521,7 @@ export default function PositionMonitor() {
                         {position.side === "buy" ? "LONG" : "SHORT"} · {position.timeframe}
                       </span>
                     </span>
-                    <span className="ml-auto num text-[10px] text-slate-400">
+                    <span className={`ml-auto num text-[10px] ${isLightMode ? "text-slate-700" : "text-slate-400"}`}>
                       {position.pnl_pct === null ? "—" : `${position.pnl_pct >= 0 ? "+" : ""}${position.pnl_pct.toFixed(2)}%`}
                     </span>
                   </button>
@@ -530,13 +535,13 @@ export default function PositionMonitor() {
 
       <footer
         data-testid="scanning-footer"
-        className="num flex h-9 shrink-0 items-center justify-between border-t border-[#1e293b] bg-[#090c11] px-4 text-[11px] text-slate-400"
+        className={`num flex h-9 shrink-0 items-center justify-between border-t px-4 text-[11px] ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-700" : "border-[#1e293b] bg-[#090c11] text-slate-400"}`}
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />
           Scanning live from CoinDCX
         </span>
-        <span className="text-slate-500" data-testid="position-count">
+        <span className={`${isLightMode ? "text-slate-600" : "text-slate-500"}`} data-testid="position-count">
           {list.length} open {list.length === 1 ? "position" : "positions"}
         </span>
       </footer>

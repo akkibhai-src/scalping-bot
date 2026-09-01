@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, History, LineChart, MapPin } from "lucide-react";
+import { History, MapPin } from "lucide-react";
 import PnlCalendar from "@/components/bot/PnlCalendar";
 import TradePositionCard from "@/components/bot/TradePositionCard";
-import { buttonVariants } from "@/components/ui/button";
 import { apiGet } from "@/lib/api";
 import { fmtInr } from "@/lib/botTypes";
 import type { DayPnl, TodaySummary, Trade } from "@/lib/botTypes";
@@ -88,7 +86,7 @@ export default function TradeHistory() {
 
   return (
     <div className={`flex h-screen min-h-0 flex-col overflow-hidden ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
-      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-white text-slate-900 shadow-sm" : "border-[#1d2d42] bg-[#0d1724] text-slate-100"}`}>
         <div className="hidden md:flex md:w-full md:items-center md:gap-2">
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded bg-[#ff455b]/15 text-[#ff455b]">
@@ -96,28 +94,8 @@ export default function TradeHistory() {
             </span>
             <div className="leading-tight">
               <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
-              <p className="num text-[9px] text-[#596273]">realised P&amp;L, daily target and running trades</p>
+              <p className="num text-[9px] text-[#596273]">realised P&amp;L and daily target</p>
             </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Link
-              to="/"
-              data-testid="scanner-link"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
-              aria-label="Scanner dashboard"
-              title="Scanner dashboard"
-            >
-              <LineChart className="h-3.5 w-3.5" />
-            </Link>
-            <Link
-              to="/bot"
-              data-testid="bot-link"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
-              aria-label="Strategy control"
-              title="Strategy control"
-            >
-              <Bot className="h-3.5 w-3.5" />
-            </Link>
           </div>
         </div>
 
@@ -130,34 +108,16 @@ export default function TradeHistory() {
               <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              to="/"
-              data-testid="scanner-link"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
-              aria-label="Scanner dashboard"
-              title="Scanner dashboard"
-            >
-              <LineChart className="h-3.5 w-3.5" />
-            </Link>
-          </div>
         </div>
       </header>
 
       <main className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden lg:p-4">
         <section className="order-1 flex min-h-0 min-w-0 flex-col gap-2 md:hidden">
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="date-box">
               <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Date</p>
               <p className="num mt-0.5 text-[11px] font-semibold text-[#7f9bff]">
                 {selectedDaySummary.date ?? "—"}
-              </p>
-            </div>
-            <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="running-trade-box">
-              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Running</p>
-              <p className="num mt-0.5 text-[11px] font-semibold text-slate-100">
-                {selectedDaySummary.trades_done}/{selectedDaySummary.max_trades}
               </p>
             </div>
             <div className={`min-w-0 rounded-md border p-1.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="today-pnl-box">
@@ -280,9 +240,9 @@ export default function TradeHistory() {
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />
-          Scanning live from CoinDCX
+          Live feed
         </span>
-        <span data-testid="ist-clock" className="text-slate-300">
+        <span data-testid="ist-clock" className={isLightMode ? "text-slate-700" : "text-slate-300"}>
           {clock}
         </span>
       </footer>

@@ -97,7 +97,7 @@ export default function BotControl() {
 
   return (
     <div className={`terminal-shell flex h-screen flex-col overflow-hidden ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
-      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-white text-slate-900 shadow-sm" : "border-[#1d2d42] bg-[#0d1724] text-slate-100"}`}>
         <div className="hidden md:flex md:w-full md:items-center md:gap-2">
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded bg-[#00c076]/15 text-[#00c076]">
@@ -349,10 +349,10 @@ export default function BotControl() {
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />
-          Scanning live from CoinDCX
+          {botOn ? "Bot armed" : "Bot idle"}
         </span>
         <span className="text-slate-500">
-          {botOn ? "Bot armed" : "Bot idle"} · {strategies.filter((s) => s.enabled).length} armed strategies
+          {strategies.filter((s) => s.enabled).length} armed strategies
         </span>
       </footer>
     </div>

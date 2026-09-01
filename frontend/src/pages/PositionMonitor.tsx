@@ -350,7 +350,7 @@ export default function PositionMonitor() {
 
   return (
     <div className={`flex min-h-screen flex-col ${isLightMode ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
-      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-white text-slate-900 shadow-sm" : "border-[#1e293b] bg-[#0b0e14] text-slate-100"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMode ? "border-[#dfeaf3] bg-white text-slate-900 shadow-sm" : "border-[#1d2d42] bg-[#0d1724] text-slate-100"}`}>
         <div className="flex w-full items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md border shadow-sm ${isLightMode ? "border-[#dfeaf3] bg-[#f8fbff] text-[#4b5563]" : "border-[#273244] bg-[#111827] text-slate-200"}`}>
@@ -452,7 +452,7 @@ export default function PositionMonitor() {
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />
-          Scanning live from CoinDCX
+          Live monitor
         </span>
         <span className={`${isLightMode ? "text-slate-600" : "text-slate-500"}`} data-testid="position-count">
           {list.length} open {list.length === 1 ? "position" : "positions"}

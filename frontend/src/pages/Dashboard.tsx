@@ -64,7 +64,7 @@ export default function Dashboard() {
 
   return (
     <div className={`terminal-shell flex h-screen flex-col overflow-hidden ${isLightMobile ? "bg-[var(--background)] text-slate-900" : "bg-[#0b0e14] text-slate-100"}`}>
-      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMobile ? "border-[#dfeaf3] bg-[var(--card)] text-slate-900" : "border-[#c9ced4] bg-[#dfe3e7]/90 text-[#17202a]"}`}>
+      <header className={`flex h-13 shrink-0 items-center gap-x-3 border-b px-4 py-2 backdrop-blur-sm ${isLightMobile ? "border-[#dfeaf3] bg-white text-slate-900 shadow-sm" : "border-[#1d2d42] bg-[#0d1724] text-slate-100"}`}>
         <div className="flex min-w-0 items-center gap-2">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
             <Activity className="h-4 w-4" />

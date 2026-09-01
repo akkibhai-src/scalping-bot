@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { ArrowLeft, Bot, CalendarDays, ChevronDown, ChevronRight, Globe2, History, Home, Mail, Phone, Radar, Shield, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, Bot, CalendarDays, ChevronDown, ChevronRight, ChevronUp, Globe2, History, Home, Mail, Phone, Radar, Shield, Sparkles, UserRound } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import Dashboard from "@/pages/Dashboard";
 import BotControl from "@/pages/BotControl";
@@ -381,6 +381,7 @@ const getTradingOverview = () => {
 function ProfilePage({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dispatch<React.SetStateAction<AppTheme>> }) {
   const [profile, setProfile] = useState<ProfileInfo>(() => getSavedProfile());
   const [overview, setOverview] = useState(() => getTradingOverview());
+  const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
 
   const handleChange = (field: keyof ProfileInfo, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -471,71 +472,80 @@ function ProfilePage({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dis
 
             <div className="space-y-4 p-4">
               <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>
-                <div className={`mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}>
-                  <UserRound className="h-3.5 w-3.5" />
-                  <span>Personal Info</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setPersonalInfoOpen((value) => !value)}
+                  className={`mb-3 flex w-full items-center justify-between gap-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] ${secondaryText}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <UserRound className="h-3.5 w-3.5" />
+                    <span>Personal Info</span>
+                  </span>
+                  {personalInfoOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
 
-                <form onSubmit={handleSaveProfile} className="space-y-3">
-                  <label className="block">
-                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Full Name</span>
-                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
-                      <UserRound className={`h-4 w-4 ${mutedText}`} />
-                      <input
-                        value={profile.name}
-                        onChange={(event) => handleChange("name", event.target.value)}
-                        placeholder="Enter your name"
-                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                      />
-                    </div>
-                  </label>
+                {personalInfoOpen ? (
+                  <form onSubmit={handleSaveProfile} className="space-y-3">
+                    <label className="block">
+                      <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Full Name</span>
+                      <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                        <UserRound className={`h-4 w-4 ${mutedText}`} />
+                        <input
+                          value={profile.name}
+                          onChange={(event) => handleChange("name", event.target.value)}
+                          placeholder="Enter your name"
+                          className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                        />
+                      </div>
+                    </label>
 
-                  <label className="block">
-                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Email</span>
-                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
-                      <Mail className={`h-4 w-4 ${mutedText}`} />
-                      <input
-                        value={profile.email}
-                        onChange={(event) => handleChange("email", event.target.value)}
-                        placeholder="user@coindcx.com"
-                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                      />
-                    </div>
-                  </label>
+                    <label className="block">
+                      <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Email</span>
+                      <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                        <Mail className={`h-4 w-4 ${mutedText}`} />
+                        <input
+                          value={profile.email}
+                          onChange={(event) => handleChange("email", event.target.value)}
+                          placeholder="user@coindcx.com"
+                          className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                        />
+                      </div>
+                    </label>
 
-                  <label className="block">
-                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Phone Number</span>
-                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
-                      <Phone className={`h-4 w-4 ${mutedText}`} />
-                      <input
-                        value={profile.phone}
-                        onChange={(event) => handleChange("phone", event.target.value)}
-                        placeholder="+91 98765 43210"
-                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                      />
-                    </div>
-                  </label>
+                    <label className="block">
+                      <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Phone Number</span>
+                      <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                        <Phone className={`h-4 w-4 ${mutedText}`} />
+                        <input
+                          value={profile.phone}
+                          onChange={(event) => handleChange("phone", event.target.value)}
+                          placeholder="+91 98765 43210"
+                          className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                        />
+                      </div>
+                    </label>
 
-                  <label className="block">
-                    <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Date of Birth</span>
-                    <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
-                      <CalendarDays className={`h-4 w-4 ${mutedText}`} />
-                      <input
-                        value={profile.age}
-                        onChange={(event) => handleChange("age", event.target.value)}
-                        placeholder="25 years old"
-                        className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
-                      />
-                    </div>
-                  </label>
+                    <label className="block">
+                      <span className={`mb-1.5 block text-[11px] font-medium ${mutedText}`}>Date of Birth</span>
+                      <div className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                        <CalendarDays className={`h-4 w-4 ${mutedText}`} />
+                        <input
+                          value={profile.age}
+                          onChange={(event) => handleChange("age", event.target.value)}
+                          placeholder="25 years old"
+                          className={`w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                        />
+                      </div>
+                    </label>
 
-                  <button
-                    type="submit"
-                    className={`mt-1 w-full rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isDark ? "bg-[#17b26a] text-[#04130e] hover:bg-[#1cd57d]" : "bg-[#12a466] text-white hover:bg-[#15bb6f]"}`}
-                  >
-                    Save profile
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      className={`mt-1 w-full rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isDark ? "bg-[#17b26a] text-[#04130e] hover:bg-[#1cd57d]" : "bg-[#12a466] text-white hover:bg-[#15bb6f]"}`}
+                    >
+                      Save profile
+                    </button>
+                  </form>
+                ) : null}
               </div>
 
               <div className={`rounded-xl border p-3 ${innerPanelClasses}`}>

@@ -167,7 +167,7 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto" data-testid="instrument-table-scroll">
+      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden" data-testid="instrument-table-scroll">
         <table className="w-full min-w-[520px] table-fixed border-collapse text-[10px] leading-none md:min-w-[980px] md:text-xs" role="table" aria-label="Active USDT Futures Instruments">
           <thead>
             <tr>

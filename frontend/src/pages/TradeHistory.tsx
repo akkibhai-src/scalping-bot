@@ -115,9 +115,9 @@ export default function TradeHistory() {
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden lg:p-4">
-        <section className="order-1 sticky top-0 z-20 flex min-h-0 min-w-0 flex-col gap-2 bg-[var(--background)] pb-1 md:hidden">
-          <div className="grid grid-cols-3 gap-1.5">
+      <main className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-1 grid-cols-1 gap-2 overflow-y-auto p-2 lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden lg:p-4">
+        <section className="order-1 z-20 flex min-h-0 min-w-0 flex-col gap-2 bg-[var(--background)] pt-0 md:hidden">
+          <div className="grid grid-cols-3 gap-1.5 pt-0.5">
             <div className={`min-w-0 rounded-md border p-1.5 ${themeCard}`} data-testid="date-box">
               <p className={`text-[7px] uppercase tracking-[0.12em] ${themeMuted}`}>Date</p>
               <p className={`num mt-0.5 text-[11px] font-semibold ${isLightMode ? "text-[#3d5ef5]" : "text-[#7f9bff]"}`}>
@@ -157,7 +157,7 @@ export default function TradeHistory() {
           </div>
         </section>
 
-        <section className="order-2 min-h-0 lg:order-2 lg:overflow-y-auto">
+        <section className="order-2 min-h-0 pb-1 lg:order-2 lg:overflow-y-auto">
           <div className={`rounded-lg border ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`}>
             <button
               type="button"

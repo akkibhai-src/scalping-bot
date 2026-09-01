@@ -383,7 +383,7 @@ function ProfilePage({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dis
   const [overview, setOverview] = useState(() => getTradingOverview());
   const [personalInfoOpen, setPersonalInfoOpen] = useState(false);
   const [tradingOverviewOpen, setTradingOverviewOpen] = useState(false);
-  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [accountSettingsOpen, setAccountSettingsOpen] = useState(true);
 
   const handleChange = (field: keyof ProfileInfo, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));

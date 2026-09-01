@@ -5,7 +5,7 @@ import { fmtCompact, fmtPct, fmtPrice } from "@/lib/types";
 import type { Ticker } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type SortKey = "change_pct" | "last" | "max_leverage" | "volume" | "symbol";
+type SortKey = "change_pct" | "last" | "max_leverage" | "volume" | "symbol" | "high" | "low";
 type FilterKey = "all" | "leverage" | "gainers" | "losers";
 
 const FILTERS: { key: FilterKey; label: string; testid: string }[] = [
@@ -24,6 +24,7 @@ function SortHead({
   desc,
   align,
   testid,
+  className,
   onSort,
 }: {
   label: string;
@@ -32,6 +33,7 @@ function SortHead({
   desc: boolean;
   align?: "right";
   testid: string;
+  className?: string;
   onSort: (key: SortKey) => void;
 }) {
   return (
@@ -39,6 +41,7 @@ function SortHead({
       className={cn(
         "sticky top-0 z-10 select-none bg-[#0e131f] px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400",
         align === "right" ? "text-right" : "text-left",
+        className,
       )}
     >
       <button
@@ -65,6 +68,9 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
   const [sortKey, setSortKey] = useState<SortKey>("change_pct");
   const [desc, setDesc] = useState(true);
   const prev = useRef<Map<string, number>>(new Map());
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+
+  const showLeverageColumn = instruments.some((t) => (t.max_leverage ?? 0) > 0);
 
   const rows = useMemo(() => {
     const q = query.trim().toUpperCase();
@@ -77,12 +83,26 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
     return [...list]
       .sort((a, b) => {
         if (sortKey === "symbol") return dir * a.symbol.localeCompare(b.symbol);
-        const av = sortKey === "max_leverage" ? (a.max_leverage ?? 0) : a[sortKey];
-        const bv = sortKey === "max_leverage" ? (b.max_leverage ?? 0) : b[sortKey];
+        const av =
+          sortKey === "max_leverage"
+            ? (a.max_leverage ?? 0)
+            : sortKey === "high"
+              ? (a.high ?? 0)
+              : sortKey === "low"
+                ? (a.low ?? 0)
+                : a[sortKey];
+        const bv =
+          sortKey === "max_leverage"
+            ? (b.max_leverage ?? 0)
+            : sortKey === "high"
+              ? (b.high ?? 0)
+              : sortKey === "low"
+                ? (b.low ?? 0)
+                : b[sortKey];
         return dir * (av - bv);
       })
-      .slice(0, MAX_ROWS);
-  }, [instruments, query, filter, sortKey, desc]);
+      .slice(0, isMobile ? 10 : MAX_ROWS);
+  }, [instruments, query, filter, sortKey, desc, isMobile]);
 
   const onSort = (key: SortKey) => {
     if (key === sortKey) setDesc((d) => !d);
@@ -94,26 +114,33 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#1e293b] px-3 py-2.5">
-        <h2 className="mr-auto font-heading text-sm font-semibold tracking-tight text-slate-100">
+      <div className="flex items-center gap-2 border-b border-[#1e293b] px-2.5 py-1.5 md:py-2.5">
+        <h2 className="mr-auto min-w-0 shrink-0 font-heading text-[12px] font-semibold tracking-tight text-slate-100 md:text-sm">
           Active USDT Futures
-          <span className="ml-2 num text-[11px] text-slate-500" data-testid="instrument-count">
-            {instruments.length} pairs
-          </span>
         </h2>
-        <div className="relative">
+        <div className="relative w-[160px] flex-none sm:w-[230px] md:flex-1 md:max-w-[320px]">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
           <Input
             data-testid="instrument-search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search BTC, SOL…"
-            className="h-8 w-44 border-[#1e293b] bg-[#0b0e14] pl-8 text-xs num placeholder:text-slate-600"
+            placeholder="Search by symbol"
+            className="h-7 w-full border-[#1e293b] bg-[#0b0e14] pl-8 pr-8 text-[10px] num placeholder:text-slate-600 md:h-8 md:text-[11px]"
           />
+          {query ? (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 hover:text-slate-200"
+            >
+              ×
+            </button>
+          ) : null}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 border-b border-[#1e293b] px-3 py-2">
+      <div className="flex gap-1 overflow-x-auto border-b border-[#1e293b] px-2.5 py-1.5">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -121,10 +148,10 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
             data-testid={f.testid}
             onClick={() => setFilter(f.key)}
             className={cn(
-              "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150",
+              "shrink-0 rounded-md border px-2 py-[3px] text-[10px] font-medium leading-none transition-all duration-150 md:px-3 md:py-1.5 md:text-[11px]",
               filter === f.key
-                ? "border-[#00c076]/50 bg-[#00c076]/12 text-[#00c076]"
-                : "border-[#1e293b] text-slate-400 hover:border-slate-600 hover:text-slate-200",
+                ? "border-[#334155] bg-[#1e293b] text-white"
+                : "border-transparent bg-transparent text-slate-400 hover:border-[#334155] hover:text-slate-200",
             )}
           >
             {f.label}
@@ -132,17 +159,19 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto" data-testid="instrument-table-scroll">
-        <table className="w-full border-collapse text-xs" role="table" aria-label="Active USDT Futures Instruments">
+      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto" data-testid="instrument-table-scroll">
+        <table className="w-full min-w-[520px] table-fixed border-collapse text-[10px] leading-none md:min-w-[980px] md:text-xs" role="table" aria-label="Active USDT Futures Instruments">
           <thead>
             <tr>
-              <SortHead label="Instrument" sortKey="symbol" active={sortKey === "symbol"} desc={desc} testid="sort-symbol-button" onSort={onSort} />
-              <SortHead label="Max Lev." sortKey="max_leverage" active={sortKey === "max_leverage"} desc={desc} align="right" testid="sort-leverage-button" onSort={onSort} />
-              <SortHead label="Last Price" sortKey="last" active={sortKey === "last"} desc={desc} align="right" testid="sort-price-button" onSort={onSort} />
-              <SortHead label="24h Change" sortKey="change_pct" active={sortKey === "change_pct"} desc={desc} align="right" testid="sort-change-button" onSort={onSort} />
-              <th className="sticky top-0 z-10 bg-[#0e131f] px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">24h High</th>
-              <th className="sticky top-0 z-10 bg-[#0e131f] px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">24h Low</th>
-              <SortHead label="Volume" sortKey="volume" active={sortKey === "volume"} desc={desc} align="right" testid="sort-volume-button" onSort={onSort} />
+              <SortHead label={isMobile && showLeverageColumn ? "Instrument · Lev" : "Instrument"} sortKey="symbol" active={sortKey === "symbol"} desc={desc} testid="sort-symbol-button" onSort={onSort} />
+              {showLeverageColumn ? (
+                <SortHead label="Max Lev." sortKey="max_leverage" active={sortKey === "max_leverage"} desc={desc} align="right" testid="sort-leverage-button" className="hidden md:table-cell" onSort={onSort} />
+              ) : null}
+              <SortHead label="Last" sortKey="last" active={sortKey === "last"} desc={desc} align="right" testid="sort-price-button" onSort={onSort} />
+              <SortHead label="24H %" sortKey="change_pct" active={sortKey === "change_pct"} desc={desc} align="right" testid="sort-change-button" onSort={onSort} />
+              <SortHead label="24H H" sortKey="high" active={sortKey === "high"} desc={desc} align="right" testid="sort-high-button" onSort={onSort} />
+              <SortHead label="24H L" sortKey="low" active={sortKey === "low"} desc={desc} align="right" testid="sort-low-button" onSort={onSort} />
+              <SortHead label="Vol" sortKey="volume" active={sortKey === "volume"} desc={desc} align="right" testid="sort-volume-button" onSort={onSort} />
             </tr>
           </thead>
           <tbody>
@@ -152,29 +181,36 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
               const tickDown = before !== undefined && t.last < before;
               prev.current.set(t.pair, t.last);
               const up = t.change_pct >= 0;
+              const limitedRange = !Number.isFinite(t.high) || !Number.isFinite(t.low) || t.high === t.low || (t.high <= 0 && t.low <= 0);
               return (
                 <tr
                   key={t.pair}
                   data-testid="instrument-row"
                   data-pair={t.pair}
                   className={cn(
-                    "border-b border-[#141c29] transition-colors duration-150 hover:bg-[#161d2b]",
+                    "cursor-pointer border-b border-[#141c29] transition-colors duration-150 hover:bg-[#1e293b]",
                     (rows.indexOf(t) + 1) % 2 === 0 ? "bg-[#0f172a]/20" : "bg-transparent",
                   )}
                 >
-                  <td className="px-3 py-1.5">
-                    <span className="num text-[12px] font-semibold text-slate-100">{t.symbol}</span>
+                  <td className="px-2 py-1.5 md:px-3 md:py-1.5">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="min-w-0">
+                        <span className="num block text-[11px] font-semibold text-slate-100 md:text-[12px]">{t.symbol}</span>
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-3 py-1.5 text-right">
-                    <span className="num rounded border border-[#1e293b] bg-[#0b0e14] px-1.5 py-0.5 text-[10px] text-slate-300">
-                      {t.max_leverage ? `${t.max_leverage}x` : "—"}
-                    </span>
-                  </td>
-                  <td className="px-3 py-1.5 text-right">
+                  {showLeverageColumn ? (
+                    <td className="hidden px-3 py-1.5 text-right md:table-cell">
+                      <span className="num rounded border border-[#1e293b] bg-[#0b0e14] px-1.5 py-0.5 text-[10px] text-slate-300">
+                        {t.max_leverage && t.max_leverage > 0 ? `${t.max_leverage}x` : "—"}
+                      </span>
+                    </td>
+                  ) : null}
+                  <td className="px-1.5 py-1 text-right md:px-3 md:py-1.5">
                     <span
                       key={`${t.pair}-${tickUp ? "u" : tickDown ? "d" : "f"}-${t.last}`}
                       className={cn(
-                        "num inline-block rounded px-1 text-[12px] text-slate-100",
+                        "num inline-block rounded px-1 text-[10px] font-medium text-slate-100 [font-feature-settings:'tnum'] md:text-[12px]",
                         tickUp && "animate-[flash-up_0.6s_ease-out] text-[#00c076]",
                         tickDown && "animate-[flash-down_0.6s_ease-out] text-[#ff455b]",
                       )}
@@ -182,11 +218,11 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                       {fmtPrice(t.last)}
                     </span>
                   </td>
-                  <td className="px-3 py-1.5 text-right">
+                  <td className="px-1.5 py-1 text-right md:px-3 md:py-1.5">
                     <span
                       data-testid="row-change"
                       className={cn(
-                        "num inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[12px] font-semibold",
+                        "num inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold md:text-[12px]",
                         up ? "bg-[#00c076]/12 text-[#00c076]" : "bg-[#ff455b]/12 text-[#ff455b]",
                       )}
                     >
@@ -194,9 +230,13 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                       {fmtPct(t.change_pct)}
                     </span>
                   </td>
-                  <td className="num px-3 py-1.5 text-right text-[12px] text-slate-400">{fmtPrice(t.high)}</td>
-                  <td className="num px-3 py-1.5 text-right text-[12px] text-slate-400">{fmtPrice(t.low)}</td>
-                  <td className="num px-3 py-1.5 text-right text-[12px] text-slate-400">{fmtCompact(t.volume)}</td>
+                  <td className="num px-1 py-1 text-right text-[9px] text-slate-300 [font-feature-settings:'tnum'] md:px-2 md:text-[11px]">
+                    {fmtPrice(t.high)}
+                  </td>
+                  <td className="num px-1 py-1 text-right text-[9px] text-slate-300 [font-feature-settings:'tnum'] md:px-2 md:text-[11px]">
+                    {fmtPrice(t.low)}
+                  </td>
+                  <td className="num px-1.5 py-1 text-right text-[10px] text-slate-400 [font-feature-settings:'tnum'] md:px-3 md:py-1.5 md:text-[12px]">{fmtCompact(t.volume)}</td>
                 </tr>
               );
             })}
@@ -210,9 +250,7 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         ) : null}
       </div>
 
-      <div className="border-t border-[#1e293b] px-3 py-1.5 text-[10px] text-slate-500 num" data-testid="instrument-table-hint">
-        Showing {rows.length} of {instruments.length} instruments — refine with search or filters
-      </div>
+
     </div>
   );
 }

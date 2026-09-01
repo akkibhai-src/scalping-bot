@@ -14,8 +14,9 @@ import httpx
 
 from lib import credentials as creds
 from lib.clock import exchange_time
+from lib.config import COINDCX_API_BASE_URL
 
-BASE = os.environ.get("COINDCX_BASE_URL", "https://api.coindcx.com")
+BASE = COINDCX_API_BASE_URL
 BALANCE_SETTLE_WINDOW = 2.0
 POSITION_LOOKUP_ATTEMPTS = 3
 POSITION_LOOKUP_DELAY = 1.0

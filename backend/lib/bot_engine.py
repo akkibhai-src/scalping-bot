@@ -1770,12 +1770,7 @@ class BotEngine:
 
         self.log(
             "signal",
-            "Pre-trade scan "
-            f"({label}): "
-            + ", ".join(
-                f"{t.symbol} {percent_label(t.change_pct)}"
-                for t in top
-            ),
+            f"Pre-trade scan ({label}): {', '.join(f'{t.symbol} {percent_label(t.change_pct)}' for t in top)}",
             s,
         )
 
@@ -2247,11 +2242,10 @@ class BotEngine:
 
                 break
 
+            pending_text = ", ".join(pending)
             self.log(
                 "signal",
-                f"Waiting for the {expected_boundary.strftime('%H:%M')} candle to close on: "
-                + ", ".join(pending)
-                + f" ({int(waited)}s waited).",
+                f"Waiting for the {expected_boundary.strftime('%H:%M')} candle to close on: {pending_text} ({int(waited)}s waited).",
                 s,
             )
 
@@ -3562,6 +3556,45 @@ class BotEngine:
         now: datetime,
     ) -> None:
         if not trade.live_enabled():
+            if (
+                rt.order_deadline
+                and now >= rt.order_deadline
+            ):
+                ticker = store.tickers.get(
+                    rt.pair or ""
+                )
+
+                if ticker is None:
+                    await self._cancel_unfilled(
+                        s,
+                        rt,
+                    )
+                    return
+
+                entry = rt.entry or 0.0
+                touched = (
+                    ticker.last <= entry
+                    if (
+                        rt.side or "sell"
+                    ) == "buy"
+                    else ticker.last >= entry
+                )
+
+                if touched:
+                    await self._on_filled(
+                        s,
+                        rt,
+                        entry,
+                        rt.quantity,
+                    )
+                    return
+
+                await self._cancel_unfilled(
+                    s,
+                    rt,
+                )
+                return
+
             ticker = store.tickers.get(
                 rt.pair or ""
             )
@@ -3885,12 +3918,19 @@ class BotEngine:
             rt.leverage,
         )
 
+        pnl_inr = (
+            (rt.capital or 0.0) * pnl / 100.0
+            if rt.capital and pnl is not None
+            else 0.0
+        )
+
         await self._update_trade(
             rt.trade_id,
             {
                 "status": outcome,
                 "exit_price": exit_price,
                 "pnl_pct": pnl,
+                "pnl_inr": pnl_inr,
                 "closed_at": now_ist().isoformat(
                     timespec="seconds"
                 ),

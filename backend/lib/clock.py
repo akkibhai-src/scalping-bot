@@ -9,9 +9,10 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from lib.config import PRICES_URL
+
 logger = logging.getLogger(__name__)
 IST = ZoneInfo("Asia/Kolkata")
-PRICES_URL = "https://public.coindcx.com/market_data/v3/current_prices/futures/rt"
 _offset_seconds = 0.0
 _last_sync_ms: int | None = None
 

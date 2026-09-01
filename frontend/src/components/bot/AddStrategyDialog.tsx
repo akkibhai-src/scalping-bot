@@ -141,7 +141,7 @@ export default function AddStrategyDialog({
     <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (next) { setStep(1); selectTemplate("legacy"); } }}>
       {showTrigger ? <DialogTrigger
         render={
-          <Button size="sm" data-testid="add-strategy-button" disabled={pending}>
+          <Button size="sm" data-testid="add-strategy-trigger" disabled={pending}>
             <Plus className="h-3.5 w-3.5" />
             <span className="sr-only">Add strategy</span>
           </Button>

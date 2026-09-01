@@ -1,4 +1,4 @@
-import { Pencil, Power } from "lucide-react";
+import { Pencil, Power, Trash2 } from "lucide-react";
 import { STATUS_STYLE } from "@/lib/botTypes";
 import type { Strategy } from "@/lib/botTypes";
 import { cn } from "@/lib/utils";
@@ -18,41 +18,40 @@ export default function StrategyList({
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
-      <div className="flex items-center justify-between border-b border-[#1e293b] px-3 py-2.5">
-        <h2 className="font-heading text-sm font-semibold text-slate-100">Strategies</h2>
-        <span className="num text-[11px] text-slate-500" data-testid="strategy-count">
+      <div className="flex items-center justify-between border-b border-[#1e293b] px-2 py-1.5 sm:px-3 sm:py-2.5">
+        <h2 className="font-heading text-[12px] font-semibold text-slate-100 sm:text-sm">Strategies</h2>
+        <span className="num text-[9px] text-slate-500 sm:text-[11px]" data-testid="strategy-count">
           {strategies.length} configured
         </span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-1 sm:p-1.5">
         {strategies.length === 0 ? (
           <p className="px-2 py-8 text-center text-xs text-slate-500" data-testid="strategy-empty-state">
             No strategies yet — use “Add Strategy” to create one.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="grid w-full content-start self-start grid-cols-2 gap-1 sm:gap-1.5 sm:grid-cols-1 sm:gap-2">
             {strategies.map((s, index) => {
               const style = STATUS_STYLE[s.status];
               const selected = s.id === selectedId;
               return (
-                <li key={s.id}>
-                  <button
-                    type="button"
+                <li key={s.id} className="min-w-0">
+                  <div
                     data-testid="strategy-card"
                     data-strategy-id={s.id}
                     data-selected={selected}
                     onClick={() => onSelect(s.id)}
                     className={cn(
-                      "w-full rounded-md border px-2.5 py-2 text-left transition-colors duration-150",
+                      "flex h-full min-h-[150px] w-full cursor-pointer flex-col rounded-md border px-1.25 py-1 text-left transition-colors duration-150 sm:min-h-[160px] sm:px-1.5 sm:py-1.25",
                       selected
                         ? "border-[#00c076]/50 bg-[#00c076]/[0.06]"
                         : "border-[#1e293b] bg-[#111724] hover:border-slate-600",
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="num text-[10px] font-semibold text-[#7f9bff]">{index + 1}.</span>
-                      <span className="font-heading text-[13px] font-semibold text-slate-100" data-testid="strategy-name">
+                    <div className="flex items-start gap-1.5">
+                      <span className="num mt-0.5 text-[8px] font-semibold text-[#7f9bff]">{index + 1}.</span>
+                      <span className="min-w-0 flex-1 font-heading text-[10px] font-semibold text-slate-100" data-testid="strategy-name">
                         {s.name}
                       </span>
                       <span
@@ -71,49 +70,30 @@ export default function StrategyList({
                           }
                         }}
                         className={cn(
-                          "ml-auto inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors duration-150",
+                          "inline-flex cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-[8px] font-semibold transition-colors duration-150",
                           s.enabled
                             ? "bg-[#00c076]/12 text-[#00c076]"
                             : "bg-slate-500/12 text-slate-400 hover:text-slate-200",
                         )}
                       >
-                        <Power className="h-3 w-3" />
+                        <Power className="h-2.5 w-2.5" />
                         {s.enabled ? "ARMED" : "OFF"}
                       </span>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Edit ${s.name}`}
-                        title="Edit strategy"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(s);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.stopPropagation();
-                            onEdit(s);
-                          }
-                        }}
-                        className="ml-auto inline-flex cursor-pointer rounded p-1 text-slate-400 hover:bg-slate-700/40 hover:text-white"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </span>
                     </div>
 
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      <span data-testid="strategy-status" className={cn("num rounded px-1.5 py-0.5 text-[9px] font-semibold", style.className)}>{style.label}</span>
-                      <span className="num rounded bg-[#1e293b] px-1.5 py-0.5 text-[9px] text-slate-300" data-testid="strategy-timeframe">{s.timeframe}</span>
-                      <span className="num rounded bg-[#1e293b] px-1.5 py-0.5 text-[9px] text-slate-300">{s.leverage}x</span>
-                      <span className="num rounded bg-[#1e293b] px-1.5 py-0.5 text-[9px] text-slate-300">TP {s.tp_pct}%</span>
-                      <span className="num rounded bg-[#1e293b] px-1.5 py-0.5 text-[9px] text-slate-300">SL {s.sl_pct ?? "—"}%</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      <span data-testid="strategy-status" className={cn("num rounded px-1 py-0.5 text-[7px] font-semibold", style.className)}>{style.label}</span>
+                      <span className="num rounded bg-[#1e293b] px-1 py-0.5 text-[7px] text-slate-300" data-testid="strategy-timeframe">{s.timeframe}</span>
+                      <span className="num rounded bg-[#1e293b] px-1 py-0.5 text-[7px] text-slate-300">{s.leverage}x</span>
+                      <span className="num rounded bg-[#1e293b] px-1 py-0.5 text-[7px] text-slate-300">TP {s.tp_pct}%</span>
+                      <span className="num rounded bg-[#1e293b] px-1 py-0.5 text-[7px] text-slate-300">SL {s.sl_pct ?? "—"}%</span>
                     </div>
 
-                    <p className="mt-1 text-[11px] leading-snug text-slate-400" data-testid="strategy-detail">
+                    <p className="mt-1 text-[9px] leading-snug text-slate-400" data-testid="strategy-detail">
                       {s.detail}
                     </p>
 
-                    <div className="num mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[9px] text-slate-500">
+                    <div className="num mt-1 flex flex-wrap gap-x-1.5 gap-y-0.5 text-[7px] text-slate-500">
                       <span>{s.coin_pick === "top_loser" ? "top loser" : "top gainer"}</span>
                       <span>₹{s.capital_cap_inr.toLocaleString("en-IN")}</span>
                       <span data-testid="strategy-trades-today">{s.trades_today}/{s.max_trades_per_day} today</span>
@@ -121,7 +101,7 @@ export default function StrategyList({
                     </div>
 
                     {s.open_pair ? (
-                      <div className="mt-1.5 rounded border border-[#1e293b] bg-[#0b0e14] px-1.5 py-1 text-[9px] text-slate-300">
+                      <div className="mt-1.5 rounded border border-[#1e293b] bg-[#0b0e14] px-1.5 py-1 text-[8px] text-slate-300">
                         <span className={s.open_side === "buy" ? "text-[#00c076]" : "text-[#ff455b]"}>
                           {s.open_side === "buy" ? "LONG" : "SHORT"} {s.open_pair}
                         </span>{" "}
@@ -129,7 +109,38 @@ export default function StrategyList({
                         {s.sl_price ? <span className="num text-slate-400"> / SL {s.sl_price.toFixed(4)}</span> : null}
                       </div>
                     ) : null}
-                  </button>
+
+                    <div className="mt-auto flex items-center gap-1.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(s);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded border border-slate-700 bg-slate-800/80 px-1 py-0.75 text-[7px] font-medium text-slate-200"
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(s.id);
+                          if (typeof window !== "undefined") {
+                            const deleteButton = document.querySelector(
+                              `[data-testid="delete-strategy-button"]`,
+                            ) as HTMLButtonElement | null;
+                            deleteButton?.click();
+                          }
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-1 py-0.75 text-[7px] font-medium text-red-300"
+                      >
+                        <Trash2 className="h-2.5 w-2.5" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </li>
               );
             })}

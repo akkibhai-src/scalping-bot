@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import { ChevronDown, Globe2 } from "lucide-react";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { ArrowLeft, Bot, CalendarDays, ChevronDown, ChevronRight, Globe2, History, Home, Mail, Phone, Radar, Shield, Sparkles, UserRound } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
+import ApiKeysDialog from "@/components/bot/ApiKeysDialog";
 import Dashboard from "@/pages/Dashboard";
 import BotControl from "@/pages/BotControl";
 import TradeHistory from "@/pages/TradeHistory";
@@ -319,6 +320,357 @@ function LoginPage() {
   );
 }
 
+type ProfileInfo = {
+  name: string;
+  email: string;
+  phone: string;
+  age: string;
+};
+
+type AppTheme = "dark" | "light";
+
+const PROFILE_STORAGE_KEY = "user-profile";
+const THEME_STORAGE_KEY = "app-theme";
+const TRADING_OVERVIEW_KEY = "trading-overview";
+
+const getSavedProfile = (): ProfileInfo => {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) {
+      return { name: "", email: "", phone: "", age: "" };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<ProfileInfo>;
+    return {
+      name: typeof parsed.name === "string" ? parsed.name : "",
+      email: typeof parsed.email === "string" ? parsed.email : "",
+      phone: typeof parsed.phone === "string" ? parsed.phone : "",
+      age: typeof parsed.age === "string" ? parsed.age : "",
+    };
+  } catch {
+    return { name: "", email: "", phone: "", age: "" };
+  }
+};
+
+const getSavedTheme = (): AppTheme => {
+  try {
+    const raw = localStorage.getItem(THEME_STORAGE_KEY);
+    if (raw === "light" || raw === "dark") return raw;
+  } catch {
+    // ignore storage errors and fall back to dark mode
+  }
+  return "dark";
+};
+
+const getTradingOverview = () => {
+  try {
+    const raw = localStorage.getItem(TRADING_OVERVIEW_KEY);
+    if (!raw) {
+      return { trades: 0, wins: 0, winRate: 0 };
+    }
+    const parsed = JSON.parse(raw) as Partial<{ trades: number; wins: number; winRate: number }>;
+    return {
+      trades: Number.isFinite(parsed.trades) ? Number(parsed.trades) : 0,
+      wins: Number.isFinite(parsed.wins) ? Number(parsed.wins) : 0,
+      winRate: Number.isFinite(parsed.winRate) ? Number(parsed.winRate) : 0,
+    };
+  } catch {
+    return { trades: 0, wins: 0, winRate: 0 };
+  }
+};
+
+function ProfilePage() {
+  const [profile, setProfile] = useState<ProfileInfo>(() => getSavedProfile());
+  const [theme, setTheme] = useState<AppTheme>(() => getSavedTheme());
+  const [overview, setOverview] = useState(() => getTradingOverview());
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  const handleChange = (field: keyof ProfileInfo, value: string) => {
+    setProfile((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSaveProfile = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const next = {
+      name: profile.name.trim(),
+      email: profile.email.trim(),
+      phone: profile.phone.trim(),
+      age: profile.age.trim(),
+    };
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+    setProfile(next);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch {
+      // ignore logout API errors and continue to route back to login
+    }
+    localStorage.removeItem(PROFILE_STORAGE_KEY);
+    localStorage.removeItem(TRADING_OVERVIEW_KEY);
+    localStorage.setItem(THEME_STORAGE_KEY, "dark");
+    setProfile({ name: "", email: "", phone: "", age: "" });
+    setTheme("dark");
+    setOverview({ trades: 0, wins: 0, winRate: 0 });
+    window.location.assign("/login");
+  };
+
+  const handleThemeToggle = () => {
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
+  };
+
+  const displayName = profile.name.trim() || "User";
+  const displayEmail = profile.email.trim() || "user@coindcx.com";
+  const displayPhone = profile.phone.trim() || "+91 98765 43210";
+  const displayAge = profile.age.trim() || "25 years old";
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "U";
+
+  const isDark = theme === "dark";
+  const shellClasses = isDark ? "bg-[#040d1a] text-slate-100" : "bg-[#edf3f9] text-[#101827]";
+  const panelClasses = isDark ? "border-[#1d2d42] bg-[#071926]" : "border-[#d7e0ea] bg-[#f9fbfd]";
+  const innerPanelClasses = isDark ? "border-[#21344a] bg-[#0a1624]" : "border-[#dfeaf3] bg-[#ffffff]";
+  const mutedText = isDark ? "text-slate-400" : "text-slate-600";
+  const strongText = isDark ? "text-white" : "text-slate-900";
+  const secondaryText = isDark ? "text-slate-300" : "text-slate-700";
+
+  return (
+    <div className={`flex h-screen flex-col ${shellClasses}`}>
+      <header className={`flex h-14 shrink-0 items-center border-b px-4 md:hidden ${isDark ? "border-[#1d2d42] bg-[#071926] text-[#eaf1ff]" : "border-[#dbe5f1] bg-[#f4f8fc] text-[#101827]"}`}>
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full border ${isDark ? "border-[#2d4052] bg-[#0b1420] text-slate-200" : "border-[#cfe0f0] bg-white text-[#101827]"}`}
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <h1 className={`font-heading text-[21px] font-semibold tracking-tight ${strongText}`}>Profile</h1>
+      </header>
+
+      <main className="flex-1 overflow-y-auto px-3 py-3 md:px-6 md:py-5">
+        <div className="mx-auto max-w-[420px]">
+          <div className={`mb-4 rounded-[18px] border p-4 shadow-[0_10px_26px_rgba(2,8,20,0.32)] ${panelClasses}`}>
+            <div className="flex flex-col items-center justify-center pb-2 pt-2">
+              <div className="relative grid h-24 w-24 place-items-center rounded-full border-[3px] border-[#24b67a] bg-[#0d1d2a] text-3xl font-bold text-slate-100">
+                {initials}
+                <span className="absolute -bottom-1 right-1 rounded-full border border-[#0d1d2a] bg-[#24b67a] px-1.5 py-0.5 text-[7px] font-bold text-[#06151d]">
+                  101
+                </span>
+              </div>
+              <div className="mt-4 text-center">
+                <h2 className={`text-[28px] font-bold ${strongText}`}>{displayName}</h2>
+                <p className={`mt-1 text-sm ${mutedText}`}>{displayEmail || "No email added yet"}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`mb-4 rounded-[18px] border p-3 ${panelClasses}`}>
+            <div className={`mb-3 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
+              <UserRound className="h-3.5 w-3.5 text-[#9ab8ff]" />
+              <span>Personal Info</span>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-3">
+              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
+                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
+                  <span className="flex items-center gap-2"><UserRound className="h-3.5 w-3.5" /> Full Name</span>
+                </div>
+                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
+                  <span className="text-xl text-slate-200">👤</span>
+                  <input
+                    value={profile.name}
+                    onChange={(event) => handleChange("name", event.target.value)}
+                    placeholder="Enter your name"
+                    className={`w-full bg-transparent text-[16px] font-bold outline-none placeholder:text-slate-500 ${strongText}`}
+                  />
+                </div>
+              </div>
+
+              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
+                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
+                  <span className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email Address</span>
+                </div>
+                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
+                  <span className="text-xl text-slate-200">✉️</span>
+                  <input
+                    value={profile.email}
+                    onChange={(event) => handleChange("email", event.target.value)}
+                    placeholder="user@coindcx.com"
+                    className={`w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                  />
+                </div>
+                <p className={`mt-2 text-[12px] ${mutedText}`}>Email cannot be changed. Contact support for updates.</p>
+              </div>
+
+              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
+                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
+                  <span className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> Phone Number</span>
+                </div>
+                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
+                  <span className="text-xl text-slate-200">📞</span>
+                  <input
+                    value={profile.phone}
+                    onChange={(event) => handleChange("phone", event.target.value)}
+                    placeholder="+91 98765 43210"
+                    className={`w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                  />
+                </div>
+              </div>
+
+              <div className={`rounded-xl border p-2.5 ${innerPanelClasses}`}>
+                <div className={`mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>
+                  <span className="flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5" /> Date of Birth</span>
+                </div>
+                <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 ${innerPanelClasses}`}>
+                  <span className="text-xl text-slate-200">🎂</span>
+                  <input
+                    value={profile.age}
+                    onChange={(event) => handleChange("age", event.target.value)}
+                    placeholder="25 years old"
+                    className={`w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-500 ${strongText}`}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className={`mt-2 w-full rounded-xl px-3 py-2.5 text-sm font-semibold shadow-[0_10px_20px_rgba(23,178,106,0.24)] transition ${isDark ? "bg-[#17b26a] text-[#04130e] hover:bg-[#1cd57d]" : "bg-[#12a466] text-white hover:bg-[#15bb6f]"}`}
+              >
+                Save profile
+              </button>
+            </form>
+          </div>
+
+          <div className={`mb-4 rounded-[18px] border p-3 ${panelClasses}`}>
+            <div className={`mb-3 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
+              <Sparkles className="h-3.5 w-3.5 text-[#9ab8ff]" />
+              <span>Trading Overview</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className={`rounded-xl border p-3 text-center ${innerPanelClasses}`}>
+                <div className={`text-[18px] font-bold ${strongText}`}>{overview.trades}</div>
+                <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Trades</div>
+              </div>
+              <div className={`rounded-xl border p-3 text-center ${innerPanelClasses}`}>
+                <div className={`text-[18px] font-bold ${strongText}`}>{overview.wins}</div>
+                <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Wins</div>
+              </div>
+              <div className={`rounded-xl border p-3 text-center ${innerPanelClasses}`}>
+                <div className="text-[18px] font-bold text-[#27d189]">{overview.winRate}%</div>
+                <div className={`mt-1 text-[10px] uppercase tracking-[0.12em] ${mutedText}`}>Win Rate</div>
+              </div>
+            </div>
+          </div>
+
+          <div className={`mb-4 rounded-[18px] border p-3 ${panelClasses}`}>
+            <div className={`mb-2 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
+              <Shield className="h-3.5 w-3.5 text-[#9ab8ff]" />
+              <span>Account Settings</span>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                ["Preferences", "✨"],
+                ["API Keys", "🔐"],
+                ["Notifications", "🔔"],
+                ["Dark Mode", "🌙"],
+                ["Currency", "₹"],
+                ["Security", "🛡️"],
+              ].map(([label, icon], index) => {
+                const isDarkModeRow = label === "Dark Mode";
+                return (
+                  <div key={label} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${innerPanelClasses}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{icon}</span>
+                      <span className={`text-[15px] font-medium ${strongText}`}>{label}</span>
+                    </div>
+                    {isDarkModeRow ? (
+                      <button
+                        type="button"
+                        onClick={handleThemeToggle}
+                        aria-label="Toggle dark mode"
+                        className={`flex h-6 w-11 items-center rounded-full p-1 transition ${theme === "dark" ? "bg-[#17b26a]" : "bg-[#dfeaf3]"}`}
+                      >
+                        <span className={`h-4 w-4 rounded-full bg-white transition ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
+                      </button>
+                    ) : index < 5 ? (
+                      <ChevronRight className={`h-4 w-4 ${mutedText}`} />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={`rounded-[18px] border p-3 ${panelClasses}`}>
+            <div className={`mb-2 flex items-center gap-2 px-1 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${secondaryText}`}>
+              <span className={`h-2 w-2 rounded-full ${isDark ? "bg-[#ff5757]" : "bg-[#ef4444]"}`} />
+              <span>Session</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[15px] font-medium ${innerPanelClasses} ${strongText}`}
+            >
+              <span className="flex items-center gap-3"><span className="text-lg">🔒</span>Logout</span>
+              <ChevronRight className={`h-4 w-4 ${mutedText}`} />
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function MobileFooter() {
+  const location = useLocation();
+  const items = [
+    { to: "/", label: "Dashboard", icon: Home },
+    { to: "/bot", label: "Bot control", icon: Bot },
+    { to: "/history", label: "Trade history", icon: History },
+    { to: "/position", label: "Live position", icon: Radar },
+    { to: "/profile", label: "Profile", icon: UserRound },
+  ];
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#c9ced4] bg-[#dfe3e7]/95 px-2 py-1.5 text-[#17202a] backdrop-blur-sm md:hidden">
+      <div className="grid grid-cols-5 gap-1 text-center text-[9px]">
+        {items.map(({ to, label, icon: Icon }) => {
+          const active = location.pathname === to;
+          return (
+            <Link
+              key={label}
+              to={to}
+              className={[
+                "flex flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1 transition-all duration-200",
+                active
+                  ? "border-[#a9b1ba] bg-[#edf1f4] text-[#17202a] shadow-[0_0_12px_rgba(109,129,147,0.18)]"
+                  : "border-transparent text-[#475569] hover:border-[#c9ced4] hover:bg-[#edf1f4] hover:text-[#17202a]",
+              ].join(" ")}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="leading-tight">{label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoutes() {
   const [ready, setReady] = useState(false);
 
@@ -335,14 +687,18 @@ function ProtectedRoutes() {
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/bot" element={<BotControl />} />
-        <Route path="/history" element={<TradeHistory />} />
-        <Route path="/position" element={<PositionMonitor />} />
-        <Route path="/testing" element={<HistoricalTesting />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <div className="pb-16 md:pb-0">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/bot" element={<BotControl />} />
+          <Route path="/history" element={<TradeHistory />} />
+          <Route path="/position" element={<PositionMonitor />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/testing" element={<HistoricalTesting />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+      <MobileFooter />
       <Toaster position="bottom-right" richColors />
     </>
   );

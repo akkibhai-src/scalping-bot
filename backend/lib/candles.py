@@ -8,8 +8,7 @@ from typing import Any
 import httpx
 
 from lib.clock import exchange_time
-
-CANDLES_URL = "https://public.coindcx.com/market_data/candlesticks"
+from lib.config import CANDLES_URL
 
 # resolution -> seconds per candle
 RESOLUTIONS: dict[str, int] = {

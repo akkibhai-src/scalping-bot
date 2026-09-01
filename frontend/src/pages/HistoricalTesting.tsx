@@ -47,7 +47,7 @@ export default function HistoricalTesting() {
 
   return (
     <div className="min-h-screen bg-[#0b0e14] text-slate-100">
-      <header className="flex flex-wrap items-center gap-2 border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a]">
+      <header className="flex flex-wrap items-center gap-2 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-1.5 text-[#17202a]">
         <Link to="/position" className="text-slate-400 hover:text-white" aria-label="Back to live positions">
           <ArrowLeft className="h-4 w-4" />
         </Link>

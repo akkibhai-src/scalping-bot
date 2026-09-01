@@ -1,25 +1,24 @@
-"""MongoDB connection shared across the backend.
-
-Uses AsyncIOMotorClient for non-blocking I/O.
-The MongoDB connection URI is provided through MONGODB_URI.
-"""
+"""MongoDB connection shared across the backend."""
 
 from __future__ import annotations
 
-import logging
 import os
+from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-logger = logging.getLogger(__name__)
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 MONGODB_URI = os.getenv("MONGODB_URI")
+DB_NAME = os.getenv("DB_NAME")
 
 if not MONGODB_URI:
-    raise RuntimeError("MONGODB_URI environment variable is required")
+    raise RuntimeError("MONGODB_URI is not set in backend/.env")
+if not DB_NAME:
+    raise RuntimeError("DB_NAME is not set in backend/.env")
 
-# Production-safe timeouts for MongoDB Atlas / cloud MongoDB.
 client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
     MONGODB_URI,
     serverSelectionTimeoutMS=10000,
@@ -27,5 +26,4 @@ client: AsyncIOMotorClient[Any] = AsyncIOMotorClient(
     socketTimeoutMS=30000,
 )
 
-# Single database used by the application.
-db: AsyncIOMotorDatabase[Any] = client["scalping_bot"]
+db: AsyncIOMotorDatabase[Any] = client[DB_NAME]

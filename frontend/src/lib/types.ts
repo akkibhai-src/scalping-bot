@@ -40,16 +40,20 @@ export const RESOLUTIONS = ["1m", "5m", "15m", "30m", "1h", "2h", "4h", "1d", "1
 export type Resolution = (typeof RESOLUTIONS)[number];
 
 export function fmtPrice(value: number): string {
-  if (!Number.isFinite(value)) return "--";
+  if (!Number.isFinite(value)) return "—";
   return value.toLocaleString("en-US", {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
+    useGrouping: true,
   });
 }
 
 export function fmtCompact(value: number): string {
-  if (!Number.isFinite(value)) return "--";
-  return value.toLocaleString("en-US", { notation: "compact", maximumFractionDigits: 2 });
+  if (!Number.isFinite(value) || value <= 0) return "—";
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(2)}K`;
+  return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function fmtPct(value: number): string {

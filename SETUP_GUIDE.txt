@@ -25,7 +25,7 @@ Use three terminals when running the app:
   Terminal 2: frontend
   Terminal 3: checks
 
-Keep LIVE_TRADING=false until paper trading is tested. Never commit backend/.env.
+Keep the live-trading toggle off until paper trading is tested. Never commit backend/.env.
 
 1. INSTALL SYSTEM PACKAGES
 ---------------------------
@@ -68,12 +68,9 @@ that still confirms that the port is reachable. The docker ps status must be Up.
 
 Terminal 1:
 
-  cd /workspaces/codespaces-blank/Scalping-main/backend
-  python3 -m venv .venv
-  . .venv/bin/activate
-  cd /workspaces/codespaces-blank/Scalping-main/backend
-  python -m pip install --upgrade pip
-  python -m pip install -r requirements.txt
+  cd /workspaces/codespaces-blank/scalping-bot/backend
+  python3 -m pip install --upgrade pip
+  python3 -m pip install -r requirements.txt
 
 Create backend/.env (keep the API keys empty for paper mode):
 
@@ -85,7 +82,7 @@ Create backend/.env (keep the API keys empty for paper mode):
     'COINDCX_API_KEY=' \
     'COINDCX_API_SECRET=' \
     'COINDCX_BASE_URL="https://api.coindcx.com"' \
-    'LIVE_TRADING=false' > .env
+    '# keep live toggle off until validation is complete' > .env
 
 For the two separate admin logins, add these settings to backend/.env:
 
@@ -109,26 +106,23 @@ Verify the backend imports:
 
 Terminal 2:
 
-  cd /workspaces/codespaces-blank/Scalping-main/frontend
+  cd /workspaces/codespaces-blank/scalping-bot/frontend
   yarn install
   yarn typecheck
 
 5. RUN THE APP
 --------------
 
-Terminal 1, with the backend virtualenv active:
+Terminal 1:
 
-  cd /workspaces/codespaces-blank/Scalping-main/backend
-  . .venv/bin/activate
-  cd /workspaces/codespaces-blank/Scalping-main/backend
-  python -m uvicorn server:app --host 0.0.0.0 --port 8001
+  cd /workspaces/codespaces-blank/scalping-bot/backend
+  python3 -m uvicorn server:app --host 0.0.0.0 --port 8001
 
 Terminal 2:
 
-  cd /workspaces/codespaces-blank/Scalping-main/frontend
-  yarn dev --host 0.0.0.0 --port 3000
-
-cd /workspaces/codespaces-blank/Scalping-main/frontend && npm run dev -- --host 0.0.0.0 --port 3000
+  cd /workspaces/codespaces-blank/scalping-bot/frontend
+  npm install
+  npm run dev -- --host 0.0.0.0 --port 3000
 Open the frontend at:
   http://localhost:3000
 
@@ -150,10 +144,9 @@ All three endpoints should return HTTP 200. If MongoDB is temporarily unavailabl
 Paper/read-only mode:
   COINDCX_API_KEY=
   COINDCX_API_SECRET=
-  LIVE_TRADING=false
+  # keep live toggle off until validation is complete
 
-Live trading requires both keys and an intentional change to:
-  LIVE_TRADING=true
+Live trading requires both keys and an intentional change to the live toggle set to true.
 
 8. COMMON FIXES
 ---------------
@@ -171,9 +164,8 @@ Port 27017, 8001, or 3000 already in use:
   sudo lsof -i :3000
 
 Missing Python package:
-  cd /workspaces/codespaces-blank/Scalping-main/backend
-  . .venv/bin/activate
-  python -m pip install -r requirements.txt
+  cd /workspaces/codespaces-blank/scalping-bot/backend
+  python3 -m pip install --break-system-packages -r requirements.txt
 
 Stop services with Ctrl+C in the backend/frontend terminals. Stop MongoDB with:
   sudo docker stop scalping-mongo

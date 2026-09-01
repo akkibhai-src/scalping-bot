@@ -18,7 +18,7 @@ import { apiDelete, apiGet, apiPost } from "@/lib/api";
 import type { CredentialStatus, CredentialValidation } from "@/lib/botTypes";
 import { cn } from "@/lib/utils";
 
-export default function ApiKeysDialog() {
+export default function ApiKeysDialog({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
@@ -126,13 +126,14 @@ export default function ApiKeysDialog() {
             aria-label="API keys"
             title="API keys"
             className={cn(
-              "h-7 w-7 p-0",
+              compact ? "flex h-7 items-center justify-center gap-1.5 px-2 text-[9px] font-medium" : "h-7 w-7 p-0",
               configured
                 ? "border-[#00c076]/40 bg-[#00c076]/[0.08] text-[#6ee7b7] hover:bg-[#00c076]/[0.14]"
-                : "border-amber-500/40 bg-amber-500/[0.06] text-amber-300 hover:bg-amber-500/[0.12]",
+                : "border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/15",
             )}
           >
-            <KeyRound className="h-3.5 w-3.5" />
+            <KeyRound className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+            {compact ? <span>API key</span> : null}
           </Button>
         }
       />

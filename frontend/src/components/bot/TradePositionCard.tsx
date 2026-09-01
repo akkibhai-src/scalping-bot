@@ -228,11 +228,11 @@ export function PositionChart({ record }: { record: PositionRecord }) {
   }, [rows, record.entry_price, record.tp_price, record.sl_price, livePrice]);
 
   if (rows.length < 2 || levels.length === 0) {
-    return <div className="grid h-[320px] place-items-center rounded-xl border border-dashed border-[#1e293b] bg-[#0b0e14] text-xs text-slate-500">Loading price chart…</div>;
+    return <div className="grid h-[210px] place-items-center rounded-xl border border-dashed border-[#1e293b] bg-[#0b0e14] text-xs text-slate-500 sm:h-[320px]">Loading price chart…</div>;
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#1e293b] bg-[#0b0e14] shadow-[0_10px_30px_rgba(15,23,42,0.18)]">
+    <div className="relative z-10 w-full max-w-full overflow-hidden rounded-xl border border-[#1e293b] bg-[#0b0e14] shadow-[0_10px_30px_rgba(15,23,42,0.18)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e293b] bg-[#0d111a] px-3 py-2">
         <div>
           <span className="text-[10px] uppercase tracking-wider text-slate-500">Price chart · IST+5:30</span>
@@ -246,7 +246,7 @@ export function PositionChart({ record }: { record: PositionRecord }) {
           ))}
         </div>
       </div>
-      <div ref={chartRef} className="h-[320px] w-full" style={{ touchAction: "none" }} />
+      <div ref={chartRef} className="relative z-10 h-[210px] w-full overflow-hidden sm:h-[320px]" style={{ touchAction: "none" }} />
     </div>
   );
 }
@@ -279,13 +279,13 @@ export default function TradePositionCard({
   ];
 
   return (
-    <article className="overflow-hidden rounded-xl border border-[#1e293b] bg-[#111724] shadow-[0_14px_35px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-[#334155]">
+    <article className="relative z-0 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-[#1e293b] bg-[#111724] shadow-[0_14px_35px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-[#334155]">
       {live ? (
-        <button type="button" onClick={onToggle} aria-expanded={expanded} className="w-full text-left hover:bg-[#151e2b]">
+        <button type="button" onClick={onToggle} aria-expanded={expanded} className="block w-full text-left hover:bg-[#151e2b]">
           <div className="grid grid-cols-2 gap-2 px-2.5 py-2 sm:grid-cols-6 sm:items-center">
-            <div>
-              <p className="num text-sm font-bold text-white">{record.pair.replace("B-", "")}</p>
-              <p className="text-[10px] text-slate-500">{record.strategy_name} · {record.timeframe}</p>
+            <div className="min-w-0">
+              <p className="num truncate text-sm font-bold text-white">{record.pair.replace("B-", "")}</p>
+              <p className="truncate text-[10px] text-slate-500">{record.strategy_name} · {record.timeframe}</p>
             </div>
             <div className={cn("num text-[11px] font-bold uppercase", record.side === "buy" ? "text-[#00c076]" : "text-[#ff455b]")}>{record.side === "buy" ? "LONG / BUY" : "SHORT / SELL"}</div>
             <div><p className="text-[10px] uppercase text-slate-600">Entry</p><p className="num text-xs text-slate-200">{fmtPrice(record.entry_price)}</p></div>
@@ -295,7 +295,7 @@ export default function TradePositionCard({
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-[#1e293b] px-2.5 py-2 text-[10px] sm:grid-cols-4">
             {metadata.map((item) => (
-              <div key={item.label}>
+              <div key={item.label} className="min-w-0">
                 <span className="block uppercase text-slate-600">{item.label}</span>
                 <span className="num mt-0.5 block text-slate-300">{item.value}</span>
               </div>
@@ -303,11 +303,11 @@ export default function TradePositionCard({
           </div>
         </button>
       ) : (
-        <button type="button" onClick={onToggle} aria-expanded={expanded} className="w-full text-left hover:bg-[#151e2b]">
+        <button type="button" onClick={onToggle} aria-expanded={expanded} className="block w-full text-left hover:bg-[#151e2b]">
         <div className="grid grid-cols-2 gap-2 px-2.5 py-2 sm:grid-cols-6 sm:items-center">
-          <div>
-            <p className="num text-sm font-bold text-white">{record.pair.replace("B-", "")}</p>
-            <p className="text-[10px] text-slate-500">{record.strategy_name} · {record.timeframe}</p>
+          <div className="min-w-0">
+            <p className="num truncate text-sm font-bold text-white">{record.pair.replace("B-", "")}</p>
+            <p className="truncate text-[10px] text-slate-500">{record.strategy_name} · {record.timeframe}</p>
           </div>
           <div className={cn("num text-[11px] font-bold uppercase", record.side === "buy" ? "text-[#00c076]" : "text-[#ff455b]")}>{record.side === "buy" ? "LONG / BUY" : "SHORT / SELL"}</div>
           <div><p className="text-[10px] uppercase text-slate-600">Entry</p><p className="num text-xs text-slate-200">{fmtPrice(record.entry_price)}</p></div>
@@ -317,7 +317,7 @@ export default function TradePositionCard({
         </div>
         <div className="grid grid-cols-2 gap-2 border-t border-[#1e293b] px-2.5 py-2 text-[10px] sm:grid-cols-4">
           {metadata.map((item) => (
-            <div key={item.label}>
+            <div key={item.label} className="min-w-0">
               <span className="block uppercase text-slate-600">{item.label}</span>
               <span className="num mt-0.5 block text-slate-300">{item.value}</span>
             </div>
@@ -326,18 +326,18 @@ export default function TradePositionCard({
         </button>
       )}
       {showDetails ? (
-        <div className="border-t border-[#1e293b] bg-[#0f1621] p-2.5">
-          <PositionChart record={record} />
-          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] sm:grid-cols-4">
-            <div><span className="block uppercase text-slate-600">Quantity</span><span className="num text-slate-300">{record.quantity}</span></div>
-            <div><span className="block uppercase text-slate-600">Capital / Leverage</span><span className="num text-slate-300">₹{record.capital_inr.toLocaleString("en-IN")} / {record.leverage}x</span></div>
-            <div><span className="block uppercase text-slate-600">TP / SL</span><span className="num text-slate-300">{fmtPrice(record.tp_price)} / {record.sl_price ? fmtPrice(record.sl_price) : "—"}</span></div>
-            <div><span className="block uppercase text-slate-600">P&L</span><span className={cn("num", pnl >= 0 ? "text-[#00c076]" : "text-[#ff455b]")}>{record.pnl_pct === null ? "—" : `${record.pnl_pct.toFixed(2)}%`} · {live && record.pnl_inr === null ? "—" : fmtInr(pnl)}</span></div>
-            <div><span className="block uppercase text-slate-600">Opened</span><span className="num text-slate-300">{formatDateTime(record.opened_at)}</span></div>
-            <div><span className="block uppercase text-slate-600">Closed</span><span className="num text-slate-300">{formatDateTime(closedAt)}</span></div>
-            <div><span className="block uppercase text-slate-600">Duration</span><span className="num text-slate-300">{duration(record)}</span></div>
-            <div><span className="block uppercase text-slate-600">Mode</span><span className="num text-slate-300">{record.mode}</span></div>
+        <div className="relative z-10 flex flex-col gap-3 overflow-hidden border-t border-[#1e293b] bg-[#0f1621] p-2.5">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] sm:grid-cols-4">
+            <div className="min-w-0"><span className="block uppercase text-slate-600">Quantity</span><span className="num text-slate-300">{record.quantity}</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">Capital / Leverage</span><span className="num text-slate-300">₹{record.capital_inr.toLocaleString("en-IN")} / {record.leverage}x</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">TP / SL</span><span className="num text-slate-300">{fmtPrice(record.tp_price)} / {record.sl_price ? fmtPrice(record.sl_price) : "—"}</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">P&L</span><span className={cn("num", pnl >= 0 ? "text-[#00c076]" : "text-[#ff455b]")}>{record.pnl_pct === null ? "—" : `${record.pnl_pct.toFixed(2)}%`} · {live && record.pnl_inr === null ? "—" : fmtInr(pnl)}</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">Opened</span><span className="num text-slate-300">{formatDateTime(record.opened_at)}</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">Closed</span><span className="num text-slate-300">{formatDateTime(closedAt)}</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">Duration</span><span className="num text-slate-300">{duration(record)}</span></div>
+            <div className="min-w-0"><span className="block uppercase text-slate-600">Mode</span><span className="num text-slate-300">{record.mode}</span></div>
           </div>
+          <PositionChart record={record} />
         </div>
       ) : null}
     </article>

@@ -6,21 +6,23 @@ from typing import Any
 
 from lib.db import db
 
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin").strip().lower()
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "kunal")
-SECOND_ADMIN_EMAIL = os.environ.get("SECOND_ADMIN_EMAIL", "sayandip").strip().lower()
-SECOND_ADMIN_PASSWORD = os.environ.get("SECOND_ADMIN_PASSWORD", "sayandip")
+ADMIN_EMAIL = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD") or ""
+SECOND_ADMIN_EMAIL = (os.environ.get("SECOND_ADMIN_EMAIL") or "").strip().lower()
+SECOND_ADMIN_PASSWORD = os.environ.get("SECOND_ADMIN_PASSWORD") or ""
 
 
 def configured_users() -> dict[str, dict[str, str]]:
-    return {
-        ADMIN_EMAIL: {"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD, "role": "admin"},
-        SECOND_ADMIN_EMAIL: {
+    users: dict[str, dict[str, str]] = {}
+    if ADMIN_EMAIL and ADMIN_PASSWORD:
+        users[ADMIN_EMAIL] = {"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD, "role": "admin"}
+    if SECOND_ADMIN_EMAIL and SECOND_ADMIN_PASSWORD:
+        users[SECOND_ADMIN_EMAIL] = {
             "email": SECOND_ADMIN_EMAIL,
             "password": SECOND_ADMIN_PASSWORD,
             "role": "admin",
-        },
-    }
+        }
+    return users
 
 
 async def ensure_admin_user() -> dict[str, Any]:

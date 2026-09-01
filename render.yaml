@@ -8,6 +8,9 @@ services:
       - key: MONGODB_URI
         sync: false
 
+      - key: DB_NAME
+        value: scalping_bot
+
       - key: CORS_ORIGINS
         value: "*"
 
@@ -29,11 +32,14 @@ services:
       - key: COINDCX_WS_PRICE_CHANNEL
         value: currentPrices@futures@rt
 
-      - key: LIVE_TRADING
-        value: "false"
-
       - key: ADMIN_EMAIL
         value: admin
 
       - key: ADMIN_PASSWORD
+        sync: false
+
+      - key: SECOND_ADMIN_EMAIL
+        value: sayandip
+
+      - key: SECOND_ADMIN_PASSWORD
         sync: false

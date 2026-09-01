@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Bot, History, LineChart, Power, Radio, Radar, Trash2, X } from "lucide-react";
@@ -19,6 +19,22 @@ export default function BotControl() {
   const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (state?.credentials_configured) {
+      setNoticeDismissed(false);
+      localStorage.setItem("bot-api-notice-dismissed", "false");
+      return;
+    }
+
+    const dismissed = localStorage.getItem("bot-api-notice-dismissed") === "true";
+    setNoticeDismissed(dismissed);
+  }, [state?.credentials_configured]);
+
+  useEffect(() => {
+    if (!state || state.credentials_configured) return;
+    localStorage.setItem("bot-api-notice-dismissed", String(noticeDismissed));
+  }, [noticeDismissed, state?.credentials_configured]);
 
   const strategies = state?.strategies ?? [];
   const selected = strategies.find((s) => s.id === selectedId) ?? null;
@@ -80,127 +96,209 @@ export default function BotControl() {
 
   return (
     <div className="terminal-shell flex h-screen flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a] backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded bg-[#00c076]/15 text-[#00c076]">
-            <Bot className="h-4 w-4" />
-          </span>
-          <div className="leading-tight">
-            <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">
-              Bot Control Center
-            </h1>
-            <p className="num text-[9px] text-[#596273]" data-testid="bot-window-label">
-              {state?.trading_window ?? "05:30 → 03:40 IST · slots follow each strategy's timeframe"}
-              {state ? ` · ${state.server_time_ist.slice(11, 19)} IST` : ""}
-            </p>
+      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+        <div className="hidden md:flex md:w-full md:items-center md:gap-2">
+          <div className="flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center rounded bg-[#00c076]/15 text-[#00c076]">
+              <Bot className="h-4 w-4" />
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">
+                Bot Control Center
+              </h1>
+              <p className="num text-[9px] text-[#596273]" data-testid="bot-window-label">
+                {state?.trading_window ?? "05:30 → 03:40 IST · slots follow each strategy's timeframe"}
+                {state ? ` · ${state.server_time_ist.slice(11, 19)} IST` : ""}
+              </p>
+            </div>
+          </div>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <span
+              data-testid="execution-mode-badge"
+              className={cn(
+                "num inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+                live
+                  ? "border-[#ff455b]/40 bg-[#ff455b]/10 text-[#ff455b]"
+                  : "border-amber-500/40 bg-amber-500/10 text-amber-400",
+              )}
+            >
+              {live ? <AlertTriangle className="h-3 w-3" /> : null}
+              {live ? "LIVE ORDERS" : "PAPER MODE"}
+            </span>
+            <span
+              data-testid="bot-connection-badge"
+              className={cn(
+                "num inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px]",
+                connection === "live"
+                  ? "border-[#00c076]/40 bg-[#00c076]/10 text-[#00c076]"
+                  : "border-[#ff455b]/40 bg-[#ff455b]/10 text-[#ff455b]",
+              )}
+            >
+              <Radio className="h-3 w-3" />
+              {connection === "live" ? "Stream" : "Stream offline"}
+            </span>
+
+            <Button
+              size="sm"
+              data-testid="bot-power-button"
+              variant={botOn ? "destructive" : "default"}
+              disabled={toggleBot.isPending}
+              onClick={() => toggleBot.mutate(!botOn)}
+              aria-label={botOn ? "Turn bot off" : "Turn bot on"}
+              title={botOn ? "Turn bot off" : "Turn bot on"}
+              className="h-7 w-7 p-0"
+            >
+              <Power className="h-3.5 w-3.5" />
+              <span className="sr-only">{botOn ? "Turn bot off" : "Turn bot on"}</span>
+            </Button>
+
+            <AddStrategyDialog onCreate={(body) => create.mutate(body)} pending={create.isPending} />
+            <AddStrategyDialog
+              onCreate={() => undefined}
+              editingStrategy={editingStrategy}
+              onUpdate={(id, body) => update.mutate({ id, body })}
+              open={Boolean(editingStrategy)}
+              onOpenChange={(open) => { if (!open) setEditingStrategy(null); }}
+              showTrigger={false}
+              pending={update.isPending}
+            />
+
+            <Button
+              size="sm"
+              variant="outline"
+              data-testid="delete-strategy-button"
+              disabled={!selected || remove.isPending}
+              onClick={() => selected && remove.mutate(selected.id)}
+              className="h-7 w-7 p-0"
+              aria-label="Delete strategy"
+              title="Delete strategy"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="sr-only">Delete strategy</span>
+            </Button>
+
+            <ApiKeysDialog />
+
+            <Link
+              to="/position"
+              data-testid="position-link"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+              aria-label="Live position"
+              title="Live position"
+            >
+              <Radar className="h-3.5 w-3.5" />
+            </Link>
+
+            <Link
+              to="/history"
+              data-testid="history-link"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
+              aria-label="Trade history"
+              title="Trade history"
+            >
+              <History className="h-3.5 w-3.5" />
+            </Link>
+
+            <Link
+              to="/"
+              data-testid="scanner-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-slate-300")}
+              aria-label="Scanner dashboard"
+              title="Scanner dashboard"
+            >
+              <LineChart className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <span
-            data-testid="execution-mode-badge"
-            className={cn(
-              "num inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
-              live
-                ? "border-[#ff455b]/40 bg-[#ff455b]/10 text-[#ff455b]"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-400",
-            )}
-          >
-            {live ? <AlertTriangle className="h-3 w-3" /> : null}
-            {live ? "LIVE ORDERS" : "PAPER MODE"}
-          </span>
+        <div className="flex w-full items-center justify-between gap-3 md:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
+              <Bot className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 leading-tight">
+              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">
+                Bot Control
+              </h1>
+            </div>
+          </div>
+
           <span
             data-testid="bot-connection-badge"
             className={cn(
-              "num inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px]",
+              "num inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-medium",
               connection === "live"
                 ? "border-[#00c076]/40 bg-[#00c076]/10 text-[#00c076]"
-                : "border-[#ff455b]/40 bg-[#ff455b]/10 text-[#ff455b]",
+                : connection === "connecting"
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                  : "border-[#ff455b]/40 bg-[#ff455b]/10 text-[#ff455b]",
             )}
           >
-            <Radio className="h-3 w-3" />
-            {connection === "live" ? "Stream" : "Stream offline"}
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                connection === "live"
+                  ? "bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]"
+                  : connection === "connecting"
+                    ? "bg-amber-400"
+                    : "bg-[#ff455b]",
+              )}
+            />
+            {connection === "live" ? "Live · CoinDCX" : connection === "connecting" ? "Connecting…" : "Stream offline · retrying"}
           </span>
-
-          <Button
-            size="sm"
-            data-testid="bot-power-button"
-            variant={botOn ? "destructive" : "default"}
-            disabled={toggleBot.isPending}
-            onClick={() => toggleBot.mutate(!botOn)}
-            aria-label={botOn ? "Turn bot off" : "Turn bot on"}
-            title={botOn ? "Turn bot off" : "Turn bot on"}
-            className="h-7 w-7 p-0"
-          >
-            <Power className="h-3.5 w-3.5" />
-            <span className="sr-only">{botOn ? "Turn bot off" : "Turn bot on"}</span>
-          </Button>
-
-          <AddStrategyDialog onCreate={(body) => create.mutate(body)} pending={create.isPending} />
-          <AddStrategyDialog
-            onCreate={() => undefined}
-            editingStrategy={editingStrategy}
-            onUpdate={(id, body) => update.mutate({ id, body })}
-            open={Boolean(editingStrategy)}
-            onOpenChange={(open) => { if (!open) setEditingStrategy(null); }}
-            showTrigger={false}
-            pending={update.isPending}
-          />
-
-          <Button
-            size="sm"
-            variant="outline"
-            data-testid="delete-strategy-button"
-            disabled={!selected || remove.isPending}
-            onClick={() => selected && remove.mutate(selected.id)}
-            className="h-7 w-7 p-0"
-            aria-label="Delete strategy"
-            title="Delete strategy"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="sr-only">Delete strategy</span>
-          </Button>
-
-          <ApiKeysDialog />
-
-          <Link
-            to="/position"
-            data-testid="position-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
-            aria-label="Live position"
-            title="Live position"
-          >
-            <Radar className="h-3.5 w-3.5" />
-          </Link>
-
-          <Link
-            to="/history"
-            data-testid="history-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-slate-200")}
-            aria-label="Trade history"
-            title="Trade history"
-          >
-            <History className="h-3.5 w-3.5" />
-          </Link>
-
-          <Link
-            to="/"
-            data-testid="scanner-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-slate-300")}
-            aria-label="Scanner dashboard"
-            title="Scanner dashboard"
-          >
-            <LineChart className="h-3.5 w-3.5" />
-          </Link>
-
         </div>
       </header>
+
+      <div className="grid min-h-[52px] grid-cols-4 items-center gap-2 border-b border-[#1e293b] bg-[#111827]/80 px-2 py-2 md:hidden">
+        <button
+          type="button"
+          onClick={() => toggleBot.mutate(!botOn)}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-[9px] font-medium",
+            botOn
+              ? "border-[#00c076]/40 bg-[#00c076]/10 text-[#00c076]"
+              : "border-slate-500/40 bg-slate-500/10 text-slate-300",
+          )}
+          aria-label={botOn ? "Turn bot off" : "Turn bot on"}
+        >
+          <Power className="h-3 w-3" />
+          {botOn ? "Bot On" : "Bot Off"}
+        </button>
+
+        <div
+          className={cn(
+            "rounded-md border px-2 py-1.5 text-center text-[9px] font-semibold",
+            live
+              ? "border-[#00c076]/40 bg-[#00c076]/10 text-[#00c076]"
+              : "border-amber-500/40 bg-amber-500/10 text-amber-400",
+          )}
+        >
+          {live ? "Money Mode" : "Paper Mode"}
+        </div>
+
+        <button
+          type="button"
+          className="flex items-center justify-center gap-1.5 rounded-md border border-[#1e293b] bg-[#0b0e14] px-2 py-1.5 text-[9px] font-medium text-slate-200"
+          onClick={() => {
+            const addButton = document.querySelector(
+              '[data-testid="add-strategy-trigger"], [data-testid="add-strategy-button"]',
+            ) as HTMLButtonElement | null;
+            addButton?.click();
+          }}
+        >
+          <Bot className="h-3 w-3" />
+          Add Strategy
+        </button>
+
+        <ApiKeysDialog compact />
+      </div>
 
       {!noticeDismissed ? (
         <div
           data-testid="paper-mode-notice"
           className={cn(
-            "flex shrink-0 items-center gap-3 border-b px-4 py-1.5 text-[11px]",
+            "flex shrink-0 items-center gap-3 border-b px-4 py-1 text-[11px] md:py-1.5",
             state?.credentials_configured
               ? "border-[#00c076]/20 bg-[#00c076]/[0.06] text-[#6ee7b7]"
               : "border-amber-500/20 bg-amber-500/[0.06] text-amber-300",
@@ -225,8 +323,8 @@ export default function BotControl() {
         </div>
       ) : null}
 
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 lg:grid-cols-12 lg:overflow-hidden">
-        <section className="terminal-panel min-h-[45vh] lg:col-span-4 lg:min-h-0">
+      <main className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto p-2 lg:grid-cols-12 lg:gap-3 lg:p-3 lg:overflow-hidden">
+        <section className="terminal-panel min-h-0 lg:col-span-4 lg:min-h-0">
           <StrategyList
             strategies={strategies}
             selectedId={selectedId}
@@ -235,14 +333,14 @@ export default function BotControl() {
             onEdit={setEditingStrategy}
           />
         </section>
-        <section className="terminal-panel min-h-[45vh] lg:col-span-8 lg:min-h-0">
+        <section className="terminal-panel min-h-0 lg:col-span-8 lg:min-h-0">
           <LogConsole logs={logs} strategies={strategies} />
         </section>
       </main>
 
       <footer
         data-testid="scanning-footer"
-        className="num flex h-9 shrink-0 items-center justify-between border-t border-[#1e293b] bg-[#090c11] px-4 text-[11px] text-slate-400"
+        className="num hidden h-9 shrink-0 items-center justify-between border-t border-[#1e293b] bg-[#090c11] px-4 text-[11px] text-slate-400 md:flex"
       >
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#00c076] animate-[beacon_1.6s_ease-in-out_infinite]" />

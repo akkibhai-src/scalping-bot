@@ -44,7 +44,7 @@ COINDCX_BASE_URL=https://api.coindcx.com
 # Leave these empty — add the key/secret from the app's API Keys dialog instead.
 COINDCX_API_KEY=
 COINDCX_API_SECRET=
-LIVE_TRADING=false
+# Keep the live-trading toggle off until validation is complete.
 EOF
 ```
 

@@ -34,7 +34,7 @@ flowchart LR
 5. The engine calculates quantity using the selected capital, leverage, instrument metadata, and USDT/INR conversion.
 6. Before a live order is allowed, the backend verifies:
    - credentials exist
-   - `LIVE_TRADING=true`
+   - live-trading toggle is enabled (`true`)
    - free INR futures wallet balance is sufficient
    - pair is valid for INR margin
 7. If a live order is allowed, the engine calls the signed CoinDCX futures order API.
@@ -136,7 +136,7 @@ TP/SL attach example:
 The app intentionally blocks live orders unless all criteria are met. This includes:
 
 - real credentials loaded
-- `LIVE_TRADING=true`
+- live-trading toggle enabled (`true`)
 - usable free INR futures wallet balance available
 - quantity and price aligned to instrument tick rules
 - pair available for INR-margin trading
@@ -205,7 +205,7 @@ bot_engine._monitor_loop() every 2 seconds
 Strategy at PENDING_ORDER state
     │
     ├─→ coindcx_trade.place_order()
-    │   ├─→ Check LIVE_TRADING env var
+    │   ├─→ Check runtime live toggle state (boolean)
     │   ├─→ Convert INR capital → USDT contract quantity
     │   ├─→ live=false? → Simulate (store in mock positions)
     │   └─→ live=true? → Send signed API call to CoinDCX

@@ -16,8 +16,8 @@ The backend verification suite is currently green:
 
 This means the app's strategy CRUD flow, fill-path behavior, timeframe validation,
 and signed CoinDCX route checks are currently passing in the repo as it stands.
-The app still requires a real CoinDCX API key and secret plus an explicit
-`LIVE_TRADING=true` toggle before any live orders are placed.
+The app still requires a real CoinDCX API key and secret plus an explicit live-trading
+ toggle set to `true` before any live orders are placed.
 
 The live order fill logic is verified to use the exchange order-status path when
 `trade.live_enabled()` is true; the paper shortcut is intentionally ignored in that
@@ -274,20 +274,23 @@ MongoDB collections used by the application:
 Create `backend/.env` locally and never commit real credentials:
 
 ```dotenv
-MONGO_URL=mongodb://127.0.0.1:27017
+MONGODB_URI=mongodb://127.0.0.1:27017
 DB_NAME=scalping
-CORS_ORIGINS=http://localhost:3000
+ADMIN_EMAIL=admin
+ADMIN_PASSWORD=kunal
+SECOND_ADMIN_EMAIL=
+SECOND_ADMIN_PASSWORD=
 APP_URL=http://localhost:3000
 COINDCX_API_KEY=
 COINDCX_API_SECRET=
 COINDCX_BASE_URL=https://api.coindcx.com
-LIVE_TRADING=false
+COINDCX_WS_URL=https://stream.coindcx.com
+COINDCX_WS_PRICE_CHANNEL=currentPrices@futures@rt
 ```
 
-`LIVE_TRADING=false` is the default protection. Adding credentials does not
-enable live execution; the UI live toggle must also be enabled. API secrets are
-stored in Mongo for runtime rotation but only masked tails are returned by the
-API.
+The live execution gate is enforced at runtime: valid credentials plus an explicit
+live toggle are required before real orders are sent. API secrets are stored in
+Mongo for runtime rotation, but only masked tails are returned by the API.
 
 ## Setup and running
 

@@ -5,10 +5,10 @@ import json
 import logging
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
-from lib.bot_engine import engine, get_engine
+from lib.bot_engine import get_engine
 from lib.clock import now_ist
 from lib.db import db
 from lib import credentials as creds
@@ -90,10 +90,11 @@ async def create_strategy(body: StrategyCreate, request: Request) -> Strategy:
     return await selected.add(strategy)
 
 
-@router.delete("/strategies/{sid}", status_code=204)
-async def delete_strategy(sid: str, request: Request) -> None:
+@router.delete("/strategies/{sid}", status_code=204, response_class=Response)
+async def delete_strategy(sid: str, request: Request) -> Response:
     if not await (await user_engine(request)).remove(sid):
         raise HTTPException(status_code=404, detail="strategy not found")
+    return Response(status_code=204)
 
 
 @router.put("/strategies/{sid}", response_model=Strategy)

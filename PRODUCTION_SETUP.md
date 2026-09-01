@@ -1,193 +1,141 @@
 # Production Setup
 
-## Checklist before live trading
+## Production checklist
 
-- paper mode has been tested
-- credentials are valid
-- the futures wallet has real INR margin
-- the strategy values are intentionally small at first
-- `LIVE_TRADING` is still off until the final live check
-- there is a clean emergency-stop path
+Before any live money is used, make sure all of these are true:
 
-## Required environment
+- the app has been tested in paper mode
+- the CoinDCX credentials are valid
+- the futures wallet has usable INR balance
+- the strategy parameters are intentionally small for the first live run
+- the live trading toggle is kept off until validation is complete
+- there is a clear emergency-stop procedure
+
+## Required environment variables
+
+Create `backend/.env` from the project root.
 
 ```env
-MONGO_URL="mongodb://127.0.0.1:27017"
+MONGODB_URI="mongodb://127.0.0.1:27017"
 DB_NAME="scalping"
-CORS_ORIGINS="http://localhost:3000"
-APP_URL="http://localhost:3000"
-COINDCX_API_KEY="..."
-COINDCX_API_SECRET="..."
-COINDCX_BASE_URL="https://api.coindcx.com"
-LIVE_TRADING=false
 ADMIN_EMAIL="admin"
 ADMIN_PASSWORD="kunal"
+SECOND_ADMIN_EMAIL=""
+SECOND_ADMIN_PASSWORD=""
+APP_URL="http://localhost:3000"
+COINDCX_API_KEY=""
+COINDCX_API_SECRET=""
+COINDCX_BASE_URL="https://api.coindcx.com"
+COINDCX_WS_URL="https://stream.coindcx.com"
+COINDCX_WS_PRICE_CHANNEL="currentPrices@futures@rt"
 ```
 
-Never commit this file to git. It contains real trading keys.
+> Keep this file local. Do not commit it to git. The app loads it from the backend folder at startup and the credential values are stored in Mongo at runtime for rotation.
 
-## Install dependencies
+## Install and run locally
+
+### Backend
 
 ```bash
-cd /workspaces/codespaces-blank/Scalping-main/backend
+cd /workspaces/codespaces-blank/scalping-bot/backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+python -m uvicorn server:app --host 0.0.0.0 --port 8001
 ```
 
-## Validate CoinDCX access
+### Frontend
+
+```bash
+cd /workspaces/codespaces-blank/scalping-bot/frontend
+npm install
+npm run dev -- --host 0.0.0.0 --port 3000
+```
+
+## Preflight validation
+
+Before any live order is enabled, validate the credentials:
 
 ```bash
 curl -X POST http://127.0.0.1:8001/api/bot/credentials/validate
 ```
 
-This is the real preflight check for live trading. It confirms the keys are accepted and the futures wallet is readable.
+This is the real preflight check. It verifies that the keys can read the CoinDCX futures wallet and that the account is usable for live trading.
 
-## Start the app
+## Production activation
 
-Backend:
+Only after the validation succeeds and the bot has proven stable in paper mode should you enable live execution.
 
-```bash
-cd /workspaces/codespaces-blank/Scalping-main/backend
-source .venv/bin/activate
-python -m uvicorn server:app --host 0.0.0.0 --port 8001
-```
-
-Frontend:
+Use the app UI or call the route:
 
 ```bash
-cd /workspaces/codespaces-blank/Scalping-main/frontend
-npm install
-npm run dev -- --host 0.0.0.0 --port 3000
+curl -X POST http://127.0.0.1:8001/api/bot/credentials/live \
+  -H "Content-Type: application/json" \
+  -d '{"on": true}'
 ```
 
-## Real-money activation
+The live toggle is the last gate. The bot will stay in paper mode if either credentials are missing or the live flag is off.
 
-Only after the credentials validate and paper mode has been stable:
+## Safety rules
 
-```env
-LIVE_TRADING=true
-```
+- the order path is gated by valid credentials and the explicit live toggle
+- trade sizing uses the actual wallet balance and strategy inputs
+- the engine skips trades when the free INR margin is not sufficient
+- pair validation is required for the INR margin book
+- all real-money execution should start with very small capital
 
-Then restart backend. The app then moves into the live execution state and the bot can send real orders.
+## Operational endpoints
 
-## Live order safety rules
-
-- entries are capped by the actual free INR futures wallet balance
-- strategy values remain user-defined; the code does not replace them with a hidden fixed leverage
-- order quantity and entry price are rounded to CoinDCX tick and step rules
-- if the account has too little usable margin, the bot skips the trade
-
-## CoinDCX live payload contract
-
-This is the actual live contract the app uses for futures order creation:
-
-```json
-{
-  "order": {
-    "side": "sell",
-    "pair": "B-BTC_USDT",
-    "order_type": "market_order",
-    "total_quantity": 0.02,
-    "leverage": 10,
-    "notification": "no_notification",
-    "time_in_force": "good_till_cancel",
-    "hidden": false,
-    "post_only": false,
-    "margin_currency_short_name": "INR"
-  }
-}
-```
-
-And for TP/SL:
-
-```json
-{
-  "id": "position_123",
-  "take_profit": {
-    "stop_price": 81000.0,
-    "order_type": "take_profit_market"
-  },
-  "stop_loss": {
-    "stop_price": 76000.0,
-    "order_type": "stop_market"
-  }
-}
-```
-
-## Operational controls
-
-- `/api/bot/state` — mode and strategy state
-- `/api/bot/positions` — open and pending positions
-- `/api/bot/logs` — recent execution logs
-- `/api/bot/credentials/live` — toggle live execution mode
-- `/api/bot/credentials/validate` — validate credentials before live trading
+- `GET /api/bot/state` — bot mode and engine state
+- `GET /api/bot/positions` — live and pending positions
+- `GET /api/bot/logs` — execution and error logs
+- `POST /api/bot/credentials/live` — enable or disable live execution
+- `POST /api/bot/credentials/validate` — validate keys before going live
 
 ## Emergency stop
 
-If the bot behaves wrong, stop it immediately:
+If the bot behaves incorrectly, stop it immediately using one of these actions:
 
-```bash
-# disable bot in UI
-# or set LIVE_TRADING=false and restart backend
-# or close positions manually on CoinDCX
-```
+- disable the bot in the UI
+- send `{"on": false}` to `/api/bot/credentials/live`
+- clear the stored credentials
+- close positions manually on CoinDCX
 
 ## Production advice
 
-Start with a very small capital allocation and monitor the bot live. Real-money execution is governed by actual CoinDCX wallet balance, not by any fixed template leverage or by the app’s default values alone.
+- run the bot with a small initial capital allocation
+- monitor logs and positions continuously during the first live period
+- prefer paper mode until the strategy has proven stable over a meaningful period
+- keep the app and environment ready for manual intervention at all times
 
+## Security checklist
 
+- [ ] `backend/.env` is not committed to git
+- [ ] CoinDCX IP whitelisting is enabled
+- [ ] 2FA is enabled on the exchange account
+- [ ] API keys are rotated on a routine schedule
+- [ ] There is a documented emergency-stop procedure
+- [ ] Strategic risk parameters remain conservative at launch
 
----
+## Common operational issues
 
-## 🔐 Security Checklist
+| Problem | Action |
+| --- | --- |
+| `401 Unauthorized` | re-check the API key and secret |
+| `400 Bad Request` | verify strategy and order parameters |
+| live trades skipped | check wallet balance and pair availability |
+| backend disconnect | verify MongoDB and the local backend process |
+| bot remains in paper mode | save keys and enable the live toggle |
 
-- [ ] API keys stored in `.env` (not git)
-- [ ] IP whitelisting enabled in CoinDCX
-- [ ] Two-factor authentication enabled
-- [ ] Paper mode tested thoroughly
-- [ ] Small capital allocation first
-- [ ] 24-hour monitoring window
-- [ ] Emergency stop procedure documented
-- [ ] Regular backups of logs
+## Final pre-launch checklist
 
----
+- [ ] MongoDB is running
+- [ ] `cd backend && pytest -q` succeeds
+- [ ] `backend/.env` contains the final credentials
+- [ ] `/api/bot/credentials/validate` returns success
+- [ ] live mode is enabled only after preflight validation
+- [ ] the strategy is conservative for the first live run
+- [ ] the user can manually stop or exit all positions
+- [ ] logs are being actively monitored
 
-## 🚨 Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| API 401 Unauthorized | Check API key/secret, verify IP whitelisting |
-| API 400 Bad Request | Order parameters wrong (we fixed this ✅) |
-| Orders not filling | Check capital, leverage, price ticks |
-| WebSocket disconnects | Normal, auto-reconnects in 3s |
-| High latency | Close other apps, check internet |
-| Position stuck | Manually close in CoinDCX, restart bot |
-
----
-
-## 📞 Contact & Support
-
-- CoinDCX Support: https://support.coindcx.com
-- Docs: https://docs.coindcx.com
-- Status: https://status.coindcx.com
-
----
-
-## ✅ Final Checklist Before Going Live
-
-- [ ] MongoDB running
-- [ ] Backend tests passing (24/24)
-- [ ] `.env` file created with real credentials
-- [ ] Paper mode tested for 24+ hours
-- [ ] No errors in logs
-- [ ] Frontend shows correct data
-- [ ] Strategy parameters verified
-- [ ] Capital allocated (small amount)
-- [ ] Read all warnings above
-- [ ] Ready to monitor 24/7
-
----
-
-**Good luck! 🚀 Trade smart, not hard.**
+This repository is intentionally safe by default: unless valid credentials are loaded and the live toggle is turned on, the engine stays in paper mode.

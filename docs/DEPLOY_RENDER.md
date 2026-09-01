@@ -14,7 +14,7 @@ Vite frontend and serves it from FastAPI, so REST calls and WebSockets remain sa
    - `COINDCX_API_KEY`: optional until live trading is configured
    - `COINDCX_API_SECRET`: optional until live trading is configured
    - `ADMIN_PASSWORD`: use a strong deployment-only password
-5. Keep `LIVE_TRADING=false` during deployment and paper testing.
+5. Keep the live-trading toggle off (`false`) during deployment and paper testing.
 6. Open the deployed URL, log in, add CoinDCX credentials through API Keys, validate,
    and enable live trading only after checking the account and strategy settings.
 

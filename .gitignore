@@ -1,9 +1,5 @@
 # Local secrets and runtime files
-.env
-.env.*
-!.env.example
-backend/.env
-backend/.venv/
+
 
 # Python
 __pycache__/

@@ -119,21 +119,21 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]">
-      <div className="flex items-center justify-between border-b border-[#1e293b] px-3 py-2.5">
-        <h2 className="font-heading text-sm font-semibold text-slate-100">Live Log Console</h2>
-        <span className="num text-[11px] text-slate-500" data-testid="log-count">
+      <div className="flex items-center justify-between border-b border-[#1e293b] px-2.5 py-1.5 sm:px-3 sm:py-2.5">
+        <h2 className="font-heading text-[11px] font-semibold text-slate-100 sm:text-sm">Live Log Console</h2>
+        <span className="num text-[9px] text-slate-500 sm:text-[11px]" data-testid="log-count">
           {visibleLogs.length} events
         </span>
       </div>
 
-      <div className="flex min-w-0 gap-1 overflow-x-auto border-b border-[#1e293b] bg-[#0a0f18] px-2 py-1.5" role="tablist" aria-label="Strategy logs">
+      <div className="flex min-w-0 gap-1 overflow-x-auto border-b border-[#1e293b] bg-[#0a0f18] px-2 py-1" role="tablist" aria-label="Strategy logs">
         <button
           type="button"
           role="tab"
           aria-selected={selectedStrategy === "all"}
           onClick={() => setSelectedStrategy("all")}
           className={cn(
-            "shrink-0 rounded px-2.5 py-1 text-[10px] font-semibold transition-colors",
+            "shrink-0 rounded px-2 py-1 text-[8px] font-semibold transition-colors sm:px-2.5 sm:text-[10px]",
             selectedStrategy === "all" ? "bg-[#00c076]/15 text-[#00c076]" : "text-slate-500 hover:bg-[#151e2d] hover:text-slate-200",
           )}
         >
@@ -150,7 +150,7 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
               aria-selected={active}
               onClick={() => setSelectedStrategy(strategy.id)}
               className={cn(
-                "flex max-w-[220px] shrink-0 items-center gap-1.5 rounded px-2.5 py-1 text-[10px] font-semibold transition-colors",
+                "flex max-w-[220px] shrink-0 items-center gap-1 rounded px-2 py-1 text-[8px] font-semibold transition-colors sm:px-2.5 sm:text-[10px]",
                 active ? "bg-[#00c076]/15 text-[#00c076]" : "text-slate-500 hover:bg-[#151e2d] hover:text-slate-200",
               )}
             >
@@ -161,11 +161,11 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
         })}
       </div>
 
-      <div className="min-w-[560px] grid-cols-[70px_60px_110px_1fr] gap-2 border-b border-[#1e293b]/60 bg-[#0f172a]/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:grid">
-        <span>Time</span>
-        <span>Level</span>
-        <span>Strategy</span>
-        <span>Message & Reason</span>
+      <div className="grid min-w-0 grid-cols-[40px_45px_40px_minmax(0,1fr)] gap-1.5 border-b border-[#1e293b]/60 bg-[#0f172a]/60 px-2 py-1 text-[7px] font-semibold uppercase tracking-wider text-slate-400 sm:grid-cols-[80px_70px_120px_minmax(0,1fr)] sm:gap-2.5 sm:px-3 sm:text-[10px]">
+        <span className="truncate">Time</span>
+        <span className="truncate">Level</span>
+        <span className="truncate">Strategy</span>
+        <span className="min-w-0 truncate">Message & Reason</span>
       </div>
 
       <div
@@ -183,7 +183,7 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
             No events yet. Switch the bot on, or force-run a strategy to see signals here.
           </p>
         ) : (
-          <div className="min-w-[560px]">
+          <div className="min-w-0">
             {visibleLogs.map((log, index) => {
               const showDivider = isCycleStart(log.message) && index > 0;
               const lowerMessage = log.message.toLowerCase();
@@ -203,18 +203,18 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
                   <div
                     data-testid="log-line"
                     data-level={log.level}
-                    className="grid grid-cols-[70px_60px_110px_1fr] gap-2 border-b border-slate-900/40 py-1.5 text-[11px] leading-relaxed hover:bg-slate-900/20"
+                    className="grid min-w-0 grid-cols-[40px_45px_40px_minmax(0,1fr)] gap-1.5 border-b border-slate-900/40 py-1 text-[7px] leading-relaxed hover:bg-slate-900/20 sm:grid-cols-[80px_70px_120px_minmax(0,1fr)] sm:gap-2.5 sm:text-[11px]"
                   >
                     <span className="shrink-0 text-slate-500">{log.ts.slice(11, 19)}</span>
-                    <span className="shrink-0 uppercase text-slate-400 font-semibold">[{log.level}]</span>
+                    <span className="shrink-0 font-semibold uppercase text-slate-400">[{log.level}]</span>
                     <span className="truncate text-slate-400" title={log.strategy_name || ""}>
                       {log.strategy_name || "—"}
                     </span>
-                    <div className="min-w-0">
-                      <div className="flex items-start gap-2">
+                    <div className="min-w-0 overflow-hidden">
+                      <div className="flex min-w-0 items-start gap-1.5">
                         <span
                           className={cn(
-                            "mt-0.5 inline-flex min-w-[52px] shrink-0 items-center border-l-2 px-1.5 text-[9px] font-bold tracking-[0.14em]",
+                            "mt-0.5 inline-flex min-w-[46px] shrink-0 items-center border-l-2 px-1 text-[7px] font-bold tracking-[0.14em] sm:min-w-[52px] sm:px-1.5 sm:text-[9px]",
                             presentation.status === "eliminated"
                               ? "border-l-rose-400 text-rose-300"
                               : presentation.status === "confirmed"
@@ -224,19 +224,19 @@ export default function LogConsole({ logs, strategies }: { logs: LogEntry[]; str
                         >
                           {presentation.label}
                         </span>
-                        <span className={cn("min-w-0 break-words text-[10px]", messageClass)}>{presentation.body}</span>
+                        <span className={cn("min-w-0 flex-1 break-words whitespace-normal text-[8px] sm:text-[10px]", messageClass)}>{presentation.body}</span>
                       </div>
                       {presentation.status === "eliminated" ? (
-                        <div className="mt-1 border-l border-rose-400/40 pl-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-300/90">
+                        <div className="mt-1 border-l border-rose-400/40 pl-3 text-[8px] font-semibold uppercase tracking-[0.08em] text-rose-300/90 sm:text-[10px]">
                           Status: sequence eliminated; only Green to Red qualifies.
                         </div>
                       ) : presentation.status === "confirmed" ? (
-                        <div className="mt-1 border-l border-emerald-400/40 pl-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-300/90">
+                        <div className="mt-1 border-l border-emerald-400/40 pl-3 text-[8px] font-semibold uppercase tracking-[0.08em] text-emerald-300/90 sm:text-[10px]">
                           Status: Green to Red confirmed; candidate match.
                         </div>
                       ) : reasonFor(log) ? (
                         <span className={cn(
-                          "text-[10px] leading-relaxed",
+                          "mt-1 block break-words whitespace-normal text-[8px] leading-relaxed sm:text-[10px]",
                           log.level === "error" ? "text-rose-300/90" : "text-amber-300/90",
                         )}>
                           {reasonFor(log)}

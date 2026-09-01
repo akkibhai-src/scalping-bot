@@ -347,69 +347,119 @@ export default function PositionMonitor() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0b0e14] text-slate-100">
-      <header className="border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a] shadow-[0_6px_25px_rgba(2,6,23,0.08)] backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1800px] flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded bg-[#f5c451]/15 text-[#f5c451]">
-            <Radar className="h-4 w-4" />
-          </span>
-          <div className="leading-tight">
-            <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Live Position Monitor</h1>
-            <p className="num text-[9px] text-[#596273]">
-              entry · TP · SL on the candles, refreshed every second
-            </p>
+      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+        <div className="hidden md:flex md:w-full md:items-center md:gap-2">
+          <div className="flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center rounded bg-[#f5c451]/15 text-[#f5c451]">
+              <Radar className="h-4 w-4" />
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Live Position Monitor</h1>
+              <p className="num text-[9px] text-[#596273]">
+                entry · TP · SL on the candles, refreshed every second
+              </p>
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            {list.length > 0 ? (
+              <span
+                className="num inline-flex items-center gap-1.5 rounded-full border border-[#00c076]/30 bg-[#00c076]/10 px-2 py-1 text-[10px] text-[#00c076]"
+                data-testid="live-position-indicator"
+              >
+                <span className="h-1.5 w-1.5 animate-[beacon_1.6s_ease-in-out_infinite] rounded-full bg-[#00c076]" />
+                {list.length} live
+              </span>
+            ) : null}
+            <span className="num text-[11px] text-slate-500" data-testid="monitor-heartbeat">
+              tick {tick}
+            </span>
+            <Link
+              to="/"
+              data-testid="scanner-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              aria-label="Scanner dashboard"
+              title="Scanner dashboard"
+            >
+              <Activity className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/history"
+              data-testid="history-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              aria-label="Trade history"
+              title="Trade history"
+            >
+              <History className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/testing"
+              data-testid="historical-testing-link"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              aria-label="Historical testing"
+              title="Historical testing"
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/bot"
+              data-testid="bot-link"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              aria-label="Strategy control"
+              title="Strategy control"
+            >
+              <Bot className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          {list.length > 0 ? (
-            <span
-              className="num inline-flex items-center gap-1.5 rounded-full border border-[#00c076]/30 bg-[#00c076]/10 px-2 py-1 text-[10px] text-[#00c076]"
-              data-testid="live-position-indicator"
-            >
-              <span className="h-1.5 w-1.5 animate-[beacon_1.6s_ease-in-out_infinite] rounded-full bg-[#00c076]" />
-              {list.length} live
+
+        <div className="flex w-full items-center justify-between gap-3 md:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
+              <Radar className="h-4 w-4" />
             </span>
-          ) : null}
-          <span className="num text-[11px] text-slate-500" data-testid="monitor-heartbeat">
-            tick {tick}
-          </span>
-          <Link
-            to="/"
-            data-testid="scanner-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
-            aria-label="Scanner dashboard"
-            title="Scanner dashboard"
-          >
-            <Activity className="h-3.5 w-3.5" />
-          </Link>
-          <Link
-            to="/history"
-            data-testid="history-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
-            aria-label="Trade history"
-            title="Trade history"
-          >
-            <History className="h-3.5 w-3.5" />
-          </Link>
-          <Link
-            to="/testing"
-            data-testid="historical-testing-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
-            aria-label="Historical testing"
-            title="Historical testing"
-          >
-            <FlaskConical className="h-3.5 w-3.5" />
-          </Link>
-          <Link
-            to="/bot"
-            data-testid="bot-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
-            aria-label="Strategy control"
-            title="Strategy control"
-          >
-            <Bot className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+            <div className="min-w-0 leading-tight">
+              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Live Position</h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {list.length > 0 ? (
+              <span
+                className="num inline-flex items-center gap-1 rounded-full border border-[#00c076]/30 bg-[#00c076]/10 px-1.5 py-0.5 text-[8px] text-[#00c076]"
+                data-testid="live-position-indicator"
+              >
+                <span className="h-1.5 w-1.5 animate-[beacon_1.6s_ease-in-out_infinite] rounded-full bg-[#00c076]" />
+                {list.length}
+              </span>
+            ) : null}
+            <Link
+              to="/"
+              data-testid="scanner-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              aria-label="Scanner dashboard"
+              title="Scanner dashboard"
+            >
+              <Activity className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/history"
+              data-testid="history-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              aria-label="Trade history"
+              title="Trade history"
+            >
+              <History className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/bot"
+              data-testid="bot-link"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              aria-label="Strategy control"
+              title="Strategy control"
+            >
+              <Bot className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </header>
 

@@ -6,9 +6,11 @@ from typing import Any
 
 import httpx
 
+from lib.config import COINDCX_API_BASE_URL
+
 logger = logging.getLogger(__name__)
 
-BASE = "https://api.coindcx.com"
+BASE = COINDCX_API_BASE_URL
 
 
 async def fetch_tickers() -> list[dict[str, Any]]:

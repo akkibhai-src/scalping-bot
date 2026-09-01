@@ -199,6 +199,46 @@ async def test_live_fill_check_is_throttled_and_uses_order_status(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_close_trade_persists_pnl_inr(monkeypatch):
+    """Closing a trade must persist INR P&L as well as the percentage, so the
+    history API can show profit/loss for both new and legacy rows."""
+    engine = BotEngine()
+    s = _make_strategy()
+    rt = Runtime()
+    rt.trade_id = "trade-1"
+    rt.pair = PAIR
+    rt.side = "sell"
+    rt.entry = 100.0
+    rt.capital = 20000.0
+    rt.leverage = 10.0
+    rt.quantity = 2.0
+
+    captured: dict[str, object] = {}
+
+    class FakeTrades:
+        async def update_one(self, filter_doc, update_doc):
+            captured["filter"] = filter_doc
+            captured["update"] = update_doc
+
+            class Result:
+                matched_count = 1
+
+            return Result()
+
+    monkeypatch.setattr(bot_engine, "db", SimpleNamespace(trades=FakeTrades()))
+    monkeypatch.setattr(engine, "_reset", lambda *args, **kwargs: None)
+    monkeypatch.setattr(engine, "_set", lambda *args, **kwargs: None)
+    monkeypatch.setattr(engine, "log", lambda *args, **kwargs: None)
+
+    await engine._close_trade(s, rt, "tp", 95.0, "Take profit hit.")
+
+    assert captured["filter"] == {"id": "trade-1", "owner_id": engine.owner_id}
+    fields = captured["update"]["$set"]
+    assert fields["pnl_pct"] == 50.0
+    assert fields["pnl_inr"] == 10000.0
+
+
+@pytest.mark.asyncio
 async def test_live_fill_check_failed_status_call_is_treated_as_not_filled(monkeypatch):
     """A failed order-status check in LIVE mode is logged and treated as not filled."""
     engine = BotEngine()

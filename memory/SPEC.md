@@ -144,9 +144,9 @@ Models: `backend/models/bot.py` ↔ `frontend/src/lib/botTypes.ts`.
 Collections: `strategies`, `bot_logs`, `trades`.
 
 ### Execution mode / safety
-Real orders require BOTH `LIVE_TRADING=true` and both API keys in `backend/.env`,
-plus BOT ON and an armed strategy. Otherwise every fill is simulated (PAPER) with
-identical logging. See `memory/test_credentials.md`.
+Real orders require both an enabled live-trading toggle (`true`) and valid API keys in
+`backend/.env`, plus BOT ON and an armed strategy. Otherwise every fill is simulated
+(PAPER) with identical logging. See `memory/test_credentials.md`.
 
 ### Deliberate deviations from the written spec
 - FastAPI + React (not Flask + Jinja2) and MongoDB (not SQLite) — the pod's stack.

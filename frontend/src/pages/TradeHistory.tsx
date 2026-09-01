@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, History, LineChart } from "lucide-react";
+import { Bot, History, LineChart, MapPin } from "lucide-react";
 import PnlCalendar from "@/components/bot/PnlCalendar";
 import TradePositionCard from "@/components/bot/TradePositionCard";
 import { buttonVariants } from "@/components/ui/button";
@@ -24,6 +24,14 @@ export default function TradeHistory() {
   const [expandedPositionId, setExpandedPositionId] = useState<string | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const updateView = () => setIsMobile(window.innerWidth < 768);
+    updateView();
+    window.addEventListener("resize", updateView);
+    return () => window.removeEventListener("resize", updateView);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setClock(istClock()), 1000);
@@ -89,56 +97,131 @@ export default function TradeHistory() {
 
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#0b0e14] text-slate-100">
-      <header className="border-b border-[#c4c8cf] bg-[#e3e5e8]/95 px-4 py-1.5 text-[#17202a] shadow-[0_6px_25px_rgba(2,6,23,0.08)] backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[1800px] flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded bg-[#ff455b]/15 text-[#ff455b]">
-            <History className="h-4 w-4" />
-          </span>
-          <div className="leading-tight">
-            <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
-            <p className="num text-[9px] text-[#596273]">realised P&amp;L, daily target and running trades</p>
+      <header className="flex h-13 shrink-0 items-center gap-x-3 border-b border-[#c9ced4] bg-[#dfe3e7]/90 px-4 py-2 text-[#17202a] backdrop-blur-sm">
+        <div className="hidden md:flex md:w-full md:items-center md:gap-2">
+          <div className="flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center rounded bg-[#ff455b]/15 text-[#ff455b]">
+              <History className="h-4 w-4" />
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
+              <p className="num text-[9px] text-[#596273]">realised P&amp;L, daily target and running trades</p>
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              to="/"
+              data-testid="scanner-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              aria-label="Scanner dashboard"
+              title="Scanner dashboard"
+            >
+              <LineChart className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              to="/bot"
+              data-testid="bot-link"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
+              aria-label="Strategy control"
+              title="Strategy control"
+            >
+              <Bot className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Link
-            to="/"
-            data-testid="scanner-link"
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
-            aria-label="Scanner dashboard"
-            title="Scanner dashboard"
-          >
-            <LineChart className="h-3.5 w-3.5" />
-          </Link>
-          <Link
-            to="/bot"
-            data-testid="bot-link"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 w-7 p-0 text-slate-200")}
-            aria-label="Strategy control"
-            title="Strategy control"
-          >
-            <Bot className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+
+        <div className="flex w-full items-center justify-between gap-3 md:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#bfc6ce] bg-[#edf1f4] text-[#4b5563] shadow-sm">
+              <History className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 leading-tight">
+              <h1 className="font-heading text-[12px] font-bold tracking-tight text-[#17202a]">Trade History</h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              to="/"
+              data-testid="scanner-link"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-7 w-7 p-0 text-slate-300")}
+              aria-label="Scanner dashboard"
+              title="Scanner dashboard"
+            >
+              <LineChart className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto grid min-h-0 w-full max-w-[1800px] flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden lg:p-4">
-        <section className="min-h-0 lg:overflow-y-auto">
+        <section className="order-1 flex min-h-0 min-w-0 flex-col gap-2 md:hidden">
+          <div className="grid grid-cols-4 gap-1.5">
+            <div className="min-w-0 rounded-md border border-[#1e293b] bg-[#0d111a] p-1.5" data-testid="date-box">
+              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Date</p>
+              <p className="num mt-0.5 text-[11px] font-semibold text-[#7f9bff]">
+                {selectedDaySummary.date ?? "—"}
+              </p>
+            </div>
+            <div className="min-w-0 rounded-md border border-[#1e293b] bg-[#0d111a] p-1.5" data-testid="running-trade-box">
+              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">Running</p>
+              <p className="num mt-0.5 text-[11px] font-semibold text-slate-100">
+                {selectedDaySummary.trades_done}/{selectedDaySummary.max_trades}
+              </p>
+            </div>
+            <div className="min-w-0 rounded-md border border-[#1e293b] bg-[#0d111a] p-1.5" data-testid="today-pnl-box">
+              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">P&amp;L</p>
+              <p
+                className={cn(
+                  "num mt-0.5 text-[11px] font-semibold",
+                  pnl > 0 ? "text-[#00c076]" : pnl < 0 ? "text-[#ff455b]" : "text-slate-300",
+                )}
+              >
+                {fmtInr(pnl)}
+              </p>
+            </div>
+            <div
+              data-testid="target-box"
+              className={cn(
+                "min-w-0 rounded-md border p-1.5",
+                achieved ? "border-[#00c076]/50 bg-[#00c076]/[0.08]" : "border-[#ff455b]/40 bg-[#ff455b]/[0.06]",
+              )}
+            >
+              <p className="text-[7px] uppercase tracking-[0.12em] text-slate-500">
+                {achieved ? "Achieved" : "Not achieved"}
+              </p>
+              <p
+                className={cn(
+                  "num mt-0.5 text-[9px] font-semibold",
+                  achieved ? "text-[#00c076]" : "text-[#ff455b]",
+                )}
+              >
+                {fmtInr(selectedDaySummary.target_inr).replace("+", "")}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="order-2 min-h-0 lg:order-2 lg:overflow-y-auto">
           <div className="rounded-lg border border-[#1e293b] bg-[#0d111a]">
             <button
               type="button"
               onClick={() => setCalendarOpen((value) => !value)}
-              className="flex w-full items-center justify-between px-3 py-2 text-left"
+              className="flex w-full items-center justify-between px-2.5 py-1.5 text-left md:px-3 md:py-2"
             >
-              <div>
-                <h2 className="font-heading text-xs font-semibold text-slate-100">Calendar</h2>
-                <p className="mt-0.5 text-[10px] text-slate-500">Select a date for trade review</p>
+              <div className="flex items-center gap-2">
+                <span className="grid h-6 w-6 place-items-center rounded bg-[#ff455b]/10 text-[#ff455b] md:h-7 md:w-7">
+                  <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                </span>
+                <div>
+                  <h2 className="font-heading text-[11px] font-semibold text-slate-100 md:text-xs">Calendar</h2>
+                  <p className="mt-0.5 text-[9px] text-slate-500 md:text-[10px]">Select a date for trade review</p>
+                </div>
               </div>
-              <span className="num text-[10px] text-slate-400">{calendarOpen ? "Hide" : "Show"}</span>
+              <span className="num text-[9px] text-slate-400 md:text-[10px]">{calendarOpen ? "Hide" : "Show"}</span>
             </button>
             {calendarOpen ? (
-              <div className="border-t border-[#1e293b] p-2">
+              <div className="border-t border-[#1e293b] p-1.5 md:p-2">
                 <PnlCalendar
                   days={daily.data ?? []}
                   selectedDate={selectedDate}
@@ -147,29 +230,30 @@ export default function TradeHistory() {
               </div>
             ) : null}
           </div>
-          <section className="mt-2 overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a]" data-testid="calendar-trades-section">
-            <div className="flex items-center justify-between border-b border-[#1e293b] px-3 py-2">
+          <section className="mt-1.5 overflow-hidden rounded-lg border border-[#1e293b] bg-[#0d111a] md:mt-2" data-testid="calendar-trades-section">
+            <div className="flex items-center justify-between border-b border-[#1e293b] px-2.5 py-1.5 md:px-3 md:py-2">
               <div>
-                <h2 className="font-heading text-sm font-semibold text-slate-100">Trades on {selectedDate}</h2>
-                <p className="mt-0.5 text-[10px] text-slate-500">Select a trade to view its complete position details.</p>
+                <h2 className="font-heading text-[11px] font-semibold text-slate-100 md:text-sm">Trades on {selectedDate}</h2>
+                <p className="mt-0.5 text-[9px] text-slate-500 md:text-[10px]">Select a trade to view its complete position details.</p>
               </div>
-              <span className="num text-[11px] text-slate-500" data-testid="today-trade-count">
+              <span className="num text-[10px] text-slate-500" data-testid="today-trade-count">
                 {selectedTrades.data?.length ?? 0} logged
               </span>
             </div>
             {selectedTrades.data && selectedTrades.data.length > 0 ? (
-              <div className="flex flex-col gap-1.5 p-1.5">
+              <div className="flex flex-col gap-1.5 overflow-hidden p-1.5 md:overflow-visible">
                 {selectedTrades.data.map((trade) => (
                   <TradePositionCard
                     key={trade.id}
                     record={trade}
-                    expanded={false}
-                    showChevron={false}
+                    expanded={isMobile ? selectedTradeId === trade.id : false}
+                    showChevron={true}
                     onToggle={() => {
-                      setSelectedTradeId(trade.id);
+                      const nextId = selectedTradeId === trade.id ? null : trade.id;
+                      setSelectedTradeId(nextId);
                       if (trade.status === "open" || trade.status === "pending") {
                         const livePosition = livePositions.data?.find((position) => position.pair === trade.pair);
-                        setExpandedPositionId(livePosition?.trade_id ?? null);
+                        setExpandedPositionId(nextId ? livePosition?.trade_id ?? null : null);
                       }
                     }}
                   />
@@ -184,50 +268,6 @@ export default function TradeHistory() {
         </section>
 
         <section className="flex min-h-0 min-w-0 flex-col gap-2 lg:overflow-y-auto">
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2.5" data-testid="date-box">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Date</p>
-              <p className="num mt-0.5 text-[15px] font-semibold text-[#7f9bff]">
-                {selectedDaySummary.date ?? "—"}
-              </p>
-            </div>
-            <div className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2.5" data-testid="running-trade-box">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Running trade</p>
-              <p className="num mt-0.5 text-[15px] font-semibold text-slate-100">
-                {selectedDaySummary.trades_done}/{selectedDaySummary.max_trades}
-              </p>
-            </div>
-            <div className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2.5" data-testid="today-pnl-box">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">Today P &amp; L</p>
-              <p
-                className={cn(
-                  "num mt-0.5 text-[15px] font-semibold",
-                  pnl > 0 ? "text-[#00c076]" : pnl < 0 ? "text-[#ff455b]" : "text-slate-300",
-                )}
-              >
-                {fmtInr(pnl)}
-              </p>
-            </div>
-            <div
-              data-testid="target-box"
-              className={cn(
-                "rounded-lg border p-2.5",
-                achieved ? "border-[#00c076]/50 bg-[#00c076]/[0.08]" : "border-[#ff455b]/40 bg-[#ff455b]/[0.06]",
-              )}
-            >
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                Target {fmtInr(selectedDaySummary.target_inr).replace("+", "")}
-              </p>
-              <p
-                className={cn(
-                  "num mt-0.5 text-[13px] font-semibold",
-                  achieved ? "text-[#00c076]" : "text-[#ff455b]",
-                )}
-              >
-                {achieved ? "Achieved" : "Not Achieved"}
-              </p>
-            </div>
-          </div>
 
           {livePositions.data && livePositions.data.length > 0 ? (
             <section className="rounded-lg border border-[#00c076]/25 bg-[#0d111a] p-2.5" data-testid="running-trades-section">

@@ -103,10 +103,10 @@ if [ -f ".env" ]; then
     fi
     
     # Check live trading setting
-    if grep -q 'LIVE_TRADING="false"' .env; then
-        echo -e "${GREEN}✅ LIVE_TRADING=false (safe mode)${NC}"
-    elif grep -q 'LIVE_TRADING="true"' .env; then
-        echo -e "${RED}⚠️  LIVE_TRADING=true (REAL MONEY MODE)${NC}"
+    if grep -q 'live_trading.*false\|liveTrading.*false' .env 2>/dev/null; then
+        echo -e "${GREEN}✅ live trading toggle is off (safe mode)${NC}"
+    elif grep -q 'live_trading.*true\|liveTrading.*true' .env 2>/dev/null; then
+        echo -e "${RED}⚠️  live trading toggle is on (REAL MONEY MODE)${NC}"
     fi
 else
     echo -e "${RED}❌ .env file not found${NC}"
@@ -118,7 +118,7 @@ else
     echo "  CORS_ORIGINS=\"http://localhost:3000\""
     echo "  COINDCX_API_KEY=\"YOUR_KEY_HERE\""
     echo "  COINDCX_API_SECRET=\"YOUR_SECRET_HERE\""
-    echo "  LIVE_TRADING=\"false\""
+    echo "  # keep the live toggle off until validation is complete"
     echo "  EOF"
     exit 1
 fi
@@ -153,11 +153,11 @@ if grep -q 'COINDCX_API_KEY="[^"]' .env && grep -q 'COINDCX_API_SECRET="[^"]' .e
     echo -e "${GREEN}✅ API credentials configured${NC}"
     echo ""
     echo "Before going LIVE:"
-    echo "  1. Test with PAPER MODE (LIVE_TRADING=false) for 24+ hours"
+    echo "  1. Test with PAPER MODE for 24+ hours"
     echo "  2. Verify all strategy signals are working correctly"
     echo "  3. Monitor logs for any errors"
     echo "  4. Start with small capital (₹1,000-5,000)"
-    echo "  5. Only then set LIVE_TRADING=true"
+    echo "  5. Only then enable the live toggle to true"
 else
     echo -e "${YELLOW}⚠️  API credentials not configured (OK for paper mode)${NC}"
     echo ""

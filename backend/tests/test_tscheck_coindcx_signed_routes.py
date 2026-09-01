@@ -175,4 +175,4 @@ async def test_every_signed_route_resolves_with_401_not_404():
                 failures.append(f"{name}: got 404/not_found (wrong route) -> {msg[:200]}")
             elif "401" not in msg and "invalid" not in msg.lower():
                 failures.append(f"{name}: unexpected non-401 error -> {msg[:200]}")
-    assert not failures, "signed routes that did not resolve correctly:\n" + "\n".join(failures)
+    assert not failures, f"signed routes that did not resolve correctly:\n{'\n'.join(failures)}"

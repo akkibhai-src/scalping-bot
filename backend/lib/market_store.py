@@ -10,13 +10,14 @@ import time
 import httpx
 
 from lib import coindcx
+from lib.config import COINDCX_WS_PRICE_CHANNEL, COINDCX_WS_URL
 from models.market import Snapshot, Ticker
 
 logger = logging.getLogger(__name__)
 
 TOP_N = 4
-SOCKET_URL = os.environ.get("COINDCX_WS_URL", "https://stream.coindcx.com")
-PRICE_CHANNEL = os.environ.get("COINDCX_WS_PRICE_CHANNEL", "currentPrices@futures@rt")
+SOCKET_URL = COINDCX_WS_URL
+PRICE_CHANNEL = COINDCX_WS_PRICE_CHANNEL
 PRICE_EVENT = "currentPrices@futures#update"
 
 

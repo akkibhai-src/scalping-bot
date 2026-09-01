@@ -1,0 +1,13 @@
+"""Centralized app and CoinDCX configuration."""
+
+import os
+
+APP_URL = os.environ.get("APP_URL")
+
+COINDCX_PUBLIC_BASE_URL = "https://public.coindcx.com"
+COINDCX_API_BASE_URL = os.environ.get("COINDCX_BASE_URL")
+COINDCX_WS_URL = os.environ.get("COINDCX_WS_URL")
+COINDCX_WS_PRICE_CHANNEL = os.environ.get("COINDCX_WS_PRICE_CHANNEL")
+
+CANDLES_URL = f"{COINDCX_PUBLIC_BASE_URL}/market_data/candlesticks"
+PRICES_URL = f"{COINDCX_PUBLIC_BASE_URL}/market_data/v3/current_prices/futures/rt"

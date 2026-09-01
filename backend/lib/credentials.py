@@ -56,9 +56,9 @@ async def load() -> None:
         )
     else:
         _state().update(
-            api_key=os.environ.get("COINDCX_API_KEY", ""),
-            api_secret=os.environ.get("COINDCX_API_SECRET", ""),
-            live_trading=os.environ.get("LIVE_TRADING", "false").lower() == "true",
+            api_key=os.environ.get("COINDCX_API_KEY") or "",
+            api_secret=os.environ.get("COINDCX_API_SECRET") or "",
+            live_trading=False,
         )
     _state()["loaded"] = True
 

@@ -263,6 +263,7 @@ export default function TradePositionCard({
   showChevron?: boolean;
 }) {
   const live = isLivePosition(record);
+  const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
   const showDetails = expanded;
   const status = TRADE_STATUS_LABEL[live ? (record.state === "pending_order" ? "pending" : "open") : record.status] ?? {
     label: live ? "Running" : record.status,
@@ -279,9 +280,9 @@ export default function TradePositionCard({
   ];
 
   return (
-    <article className="relative z-0 w-full max-w-full min-w-0 overflow-hidden rounded-xl border border-[#1e293b] bg-[#111724] shadow-[0_14px_35px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-[#334155]">
+    <article className={cn("relative z-0 w-full max-w-full min-w-0 overflow-hidden rounded-xl border shadow-[0_14px_35px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-[#334155]", isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#111724]") }>
       {live ? (
-        <button type="button" onClick={onToggle} aria-expanded={expanded} className="block w-full text-left hover:bg-[#151e2b]">
+        <button type="button" onClick={onToggle} aria-expanded={expanded} className={cn("block w-full text-left", isLightMode ? "hover:bg-[#eef3fb]" : "hover:bg-[#151e2b]")}>
           <div className="grid grid-cols-2 gap-2 px-2.5 py-2 sm:grid-cols-6 sm:items-center">
             <div className="min-w-0">
               <p className="num truncate text-sm font-bold text-white">{record.pair.replace("B-", "")}</p>
@@ -303,7 +304,7 @@ export default function TradePositionCard({
           </div>
         </button>
       ) : (
-        <button type="button" onClick={onToggle} aria-expanded={expanded} className="block w-full text-left hover:bg-[#151e2b]">
+        <button type="button" onClick={onToggle} aria-expanded={expanded} className={cn("block w-full text-left", isLightMode ? "hover:bg-[#eef3fb]" : "hover:bg-[#151e2b]")}>
         <div className="grid grid-cols-2 gap-2 px-2.5 py-2 sm:grid-cols-6 sm:items-center">
           <div className="min-w-0">
             <p className="num truncate text-sm font-bold text-white">{record.pair.replace("B-", "")}</p>
@@ -326,7 +327,7 @@ export default function TradePositionCard({
         </button>
       )}
       {showDetails ? (
-        <div className="relative z-10 flex flex-col gap-3 overflow-hidden border-t border-[#1e293b] bg-[#0f1621] p-2.5">
+        <div className={cn("relative z-10 flex flex-col gap-3 overflow-hidden border-t p-2.5", isLightMode ? "border-[#dfeaf3] bg-[#f7faff]" : "border-[#1e293b] bg-[#0f1621]")}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] sm:grid-cols-4">
             <div className="min-w-0"><span className="block uppercase text-slate-600">Quantity</span><span className="num text-slate-300">{record.quantity}</span></div>
             <div className="min-w-0"><span className="block uppercase text-slate-600">Capital / Leverage</span><span className="num text-slate-300">₹{record.capital_inr.toLocaleString("en-IN")} / {record.leverage}x</span></div>

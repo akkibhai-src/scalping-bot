@@ -75,6 +75,9 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
   const isLightMode = typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
 
   const showLeverageColumn = instruments.some((t) => (t.max_leverage ?? 0) > 0);
+  const textPrimary = isLightMode ? "text-slate-900" : "text-slate-100";
+  const textSecondary = isLightMode ? "text-slate-700" : "text-slate-300";
+  const textMuted = isLightMode ? "text-slate-500" : "text-slate-400";
 
   const rows = useMemo(() => {
     const q = query.trim().toUpperCase();
@@ -171,9 +174,9 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
         <table className="w-full min-w-[520px] table-fixed border-collapse text-[10px] leading-none md:min-w-[980px] md:text-xs" role="table" aria-label="Active USDT Futures Instruments">
           <thead>
             <tr>
-              <SortHead label={isMobile && showLeverageColumn ? "Instrument · Lev" : "Instrument"} sortKey="symbol" active={sortKey === "symbol"} desc={desc} testid="sort-symbol-button" isLightMode={isLightMode} onSort={onSort} />
+              <SortHead label={isMobile && showLeverageColumn ? "Instrument" : "Instrument"} sortKey="symbol" active={sortKey === "symbol"} desc={desc} testid="sort-symbol-button" isLightMode={isLightMode} onSort={onSort} />
               {showLeverageColumn ? (
-                <SortHead label="Max Lev." sortKey="max_leverage" active={sortKey === "max_leverage"} desc={desc} align="right" testid="sort-leverage-button" className="hidden md:table-cell" isLightMode={isLightMode} onSort={onSort} />
+                <SortHead label={isMobile ? "Lev" : "Max Lev."} sortKey="max_leverage" active={sortKey === "max_leverage"} desc={desc} align="right" testid="sort-leverage-button" className="hidden md:table-cell" isLightMode={isLightMode} onSort={onSort} />
               ) : null}
               <SortHead label="Last" sortKey="last" active={sortKey === "last"} desc={desc} align="right" testid="sort-price-button" isLightMode={isLightMode} onSort={onSort} />
               <SortHead label="24H %" sortKey="change_pct" active={sortKey === "change_pct"} desc={desc} align="right" testid="sort-change-button" isLightMode={isLightMode} onSort={onSort} />
@@ -203,13 +206,13 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                   <td className="px-2 py-1.5 md:px-3 md:py-1.5">
                     <div className="flex items-center justify-between gap-1.5">
                       <div className="min-w-0">
-                        <span className="num block text-[11px] font-semibold text-slate-100 md:text-[12px]">{t.symbol}</span>
+                        <span className={cn("num block text-[11px] font-semibold md:text-[12px]", textPrimary)}>{t.symbol}</span>
                       </div>
                     </div>
                   </td>
                   {showLeverageColumn ? (
                     <td className="hidden px-3 py-1.5 text-right md:table-cell">
-                      <span className="num rounded border border-[#1e293b] bg-[#0b0e14] px-1.5 py-0.5 text-[10px] text-slate-300">
+                      <span className={cn("num rounded border px-1.5 py-0.5 text-[10px]", isLightMode ? "border-[#dfeaf3] bg-[#f5f9ff] text-slate-700" : "border-[#1e293b] bg-[#0b0e14] text-slate-300") }>
                         {t.max_leverage && t.max_leverage > 0 ? `${t.max_leverage}x` : "—"}
                       </span>
                     </td>
@@ -218,7 +221,8 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                     <span
                       key={`${t.pair}-${tickUp ? "u" : tickDown ? "d" : "f"}-${t.last}`}
                       className={cn(
-                        "num inline-block rounded px-1 text-[10px] font-medium text-slate-100 [font-feature-settings:'tnum'] md:text-[12px]",
+                        "num inline-block rounded px-1 text-[10px] font-medium [font-feature-settings:'tnum'] md:text-[12px]",
+                        textPrimary,
                         tickUp && "animate-[flash-up_0.6s_ease-out] text-[#00c076]",
                         tickDown && "animate-[flash-down_0.6s_ease-out] text-[#ff455b]",
                       )}
@@ -238,13 +242,13 @@ export default function InstrumentTable({ instruments }: { instruments: Ticker[]
                       {fmtPct(t.change_pct)}
                     </span>
                   </td>
-                  <td className="num px-1 py-1 text-right text-[9px] text-slate-300 [font-feature-settings:'tnum'] md:px-2 md:text-[11px]">
+                  <td className={cn("num px-1 py-1 text-right text-[9px] [font-feature-settings:'tnum'] md:px-2 md:text-[11px]", textSecondary)}>
                     {fmtPrice(t.high)}
                   </td>
-                  <td className="num px-1 py-1 text-right text-[9px] text-slate-300 [font-feature-settings:'tnum'] md:px-2 md:text-[11px]">
+                  <td className={cn("num px-1 py-1 text-right text-[9px] [font-feature-settings:'tnum'] md:px-2 md:text-[11px]", textSecondary)}>
                     {fmtPrice(t.low)}
                   </td>
-                  <td className="num px-1.5 py-1 text-right text-[10px] text-slate-400 [font-feature-settings:'tnum'] md:px-3 md:py-1.5 md:text-[12px]">{fmtCompact(t.volume)}</td>
+                  <td className={cn("num px-1.5 py-1 text-right text-[10px] [font-feature-settings:'tnum'] md:px-3 md:py-1.5 md:text-[12px]", textMuted)}>{fmtCompact(t.volume)}</td>
                 </tr>
               );
             })}

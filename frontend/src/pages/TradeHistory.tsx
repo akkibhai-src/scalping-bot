@@ -83,6 +83,7 @@ export default function TradeHistory() {
   const achieved = selectedDaySummary.target_achieved;
   const selectedTrade = selectedTrades.data?.find((trade) => trade.id === selectedTradeId) ?? null;
   const selectedTradeIsRunning = selectedTrade?.status === "open" || selectedTrade?.status === "pending";
+  const showSelectedTradeDetails = !isMobile && selectedTrade && !selectedTradeIsRunning;
   const themeText = isLightMode ? "text-slate-900" : "text-slate-100";
   const themeMuted = isLightMode ? "text-slate-600" : "text-slate-400";
   const themeCard = isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]";
@@ -219,7 +220,7 @@ export default function TradeHistory() {
 
         <section className="flex min-h-0 min-w-0 flex-col gap-2 lg:overflow-y-auto">
 
-          {selectedTrade && !selectedTradeIsRunning ? (
+          {showSelectedTradeDetails ? (
             <section className={`rounded-lg border p-2.5 ${isLightMode ? "border-[#dfeaf3] bg-[var(--card)]" : "border-[#1e293b] bg-[#0d111a]"}`} data-testid="selected-trade-details">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="font-heading text-sm font-semibold text-slate-100">Trade details</h2>

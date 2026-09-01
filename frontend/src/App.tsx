@@ -378,16 +378,9 @@ const getTradingOverview = () => {
   }
 };
 
-function ProfilePage() {
+function ProfilePage({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dispatch<React.SetStateAction<AppTheme>> }) {
   const [profile, setProfile] = useState<ProfileInfo>(() => getSavedProfile());
-  const [theme, setTheme] = useState<AppTheme>(() => getSavedTheme());
   const [overview, setOverview] = useState(() => getTradingOverview());
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
 
   const handleChange = (field: keyof ProfileInfo, value: string) => {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -624,8 +617,9 @@ function ProfilePage() {
   );
 }
 
-function MobileFooter() {
+function MobileFooter({ theme }: { theme: AppTheme }) {
   const location = useLocation();
+  const isDark = theme === "dark";
   const items = [
     { to: "/", label: "Dashboard", icon: Home },
     { to: "/bot", label: "Bot control", icon: Bot },
@@ -635,20 +629,23 @@ function MobileFooter() {
   ];
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-[#c9ced4] bg-[#dfe3e7]/95 px-2 py-1.5 text-[#17202a] backdrop-blur-sm md:hidden">
+    <div className={`fixed inset-x-0 bottom-0 z-50 border-t px-2 pb-[calc(0.7rem+env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-sm md:hidden ${isDark ? "border-[#1d2d42] bg-[#0d1724]/95 text-slate-100" : "border-[#dfeaf3] bg-white/95 text-slate-900"}`}>
       <div className="grid grid-cols-5 gap-1 text-center text-[9px]">
         {items.map(({ to, label, icon: Icon }) => {
           const active = location.pathname === to;
+          const activeClasses = active
+            ? isDark
+              ? "border-[#2a3b50] bg-[#111f2d] text-white shadow-[0_0_12px_rgba(109,129,147,0.18)]"
+              : "border-[#dbeaf7] bg-[#f2f7fd] text-slate-900 shadow-[0_0_12px_rgba(109,129,147,0.18)]"
+            : isDark
+              ? "border-transparent text-slate-400 hover:border-[#2a3b50] hover:bg-[#111f2d] hover:text-slate-100"
+              : "border-transparent text-slate-600 hover:border-[#dbeaf7] hover:bg-[#f2f7fd] hover:text-slate-900";
+
           return (
             <Link
               key={label}
               to={to}
-              className={[
-                "flex flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1 transition-all duration-200",
-                active
-                  ? "border-[#a9b1ba] bg-[#edf1f4] text-[#17202a] shadow-[0_0_12px_rgba(109,129,147,0.18)]"
-                  : "border-transparent text-[#475569] hover:border-[#c9ced4] hover:bg-[#edf1f4] hover:text-[#17202a]",
-              ].join(" ")}
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-md border px-1 py-1 transition-all duration-200 ${activeClasses}`}
             >
               <Icon className="h-4 w-4" />
               <span className="leading-tight">{label}</span>
@@ -660,7 +657,7 @@ function MobileFooter() {
   );
 }
 
-function ProtectedRoutes() {
+function ProtectedRoutes({ theme, setTheme }: { theme: AppTheme; setTheme: React.Dispatch<React.SetStateAction<AppTheme>> }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -676,28 +673,37 @@ function ProtectedRoutes() {
 
   return (
     <>
-      <div className="pb-16 md:pb-0">
+      <div className="min-h-screen pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/bot" element={<BotControl />} />
           <Route path="/history" element={<TradeHistory />} />
           <Route path="/position" element={<PositionMonitor />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfilePage theme={theme} setTheme={setTheme} />} />
           <Route path="/testing" element={<HistoricalTesting />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-      <MobileFooter />
+      <MobileFooter theme={theme} />
       <Toaster position="bottom-right" richColors />
     </>
   );
 }
 
 export default function App() {
+  const [theme, setTheme] = useState<AppTheme>(() => getSavedTheme());
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="*" element={<ProtectedRoutes />} />
+      <Route path="*" element={<ProtectedRoutes theme={theme} setTheme={setTheme} />} />
     </Routes>
   );
 }

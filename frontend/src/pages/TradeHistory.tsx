@@ -7,7 +7,7 @@ import TradePositionCard from "@/components/bot/TradePositionCard";
 import { buttonVariants } from "@/components/ui/button";
 import { apiGet } from "@/lib/api";
 import { fmtInr } from "@/lib/botTypes";
-import type { DayPnl, LivePosition, TodaySummary, Trade } from "@/lib/botTypes";
+import type { DayPnl, TodaySummary, Trade } from "@/lib/botTypes";
 import { cn } from "@/lib/utils";
 
 function istClock(): string {
@@ -21,7 +21,6 @@ function istDate(): string {
 export default function TradeHistory() {
   const [clock, setClock] = useState(istClock);
   const [selectedDate, setSelectedDate] = useState(istDate);
-  const [expandedPositionId, setExpandedPositionId] = useState<string | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -62,17 +61,8 @@ export default function TradeHistory() {
     refetchOnWindowFocus: false,
   });
 
-  const livePositions = useQuery({
-    queryKey: ["bot-history-live-positions"],
-    queryFn: () => apiGet<LivePosition[]>("/bot/positions"),
-    refetchInterval: 5000,
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
   useEffect(() => {
     setSelectedTradeId(null);
-    setExpandedPositionId(null);
   }, [selectedDate]);
 
   const summary = today.data ?? null;
@@ -251,10 +241,6 @@ export default function TradeHistory() {
                     onToggle={() => {
                       const nextId = selectedTradeId === trade.id ? null : trade.id;
                       setSelectedTradeId(nextId);
-                      if (trade.status === "open" || trade.status === "pending") {
-                        const livePosition = livePositions.data?.find((position) => position.pair === trade.pair);
-                        setExpandedPositionId(nextId ? livePosition?.trade_id ?? null : null);
-                      }
                     }}
                   />
                 ))}
@@ -268,28 +254,6 @@ export default function TradeHistory() {
         </section>
 
         <section className="flex min-h-0 min-w-0 flex-col gap-2 lg:overflow-y-auto">
-
-          {livePositions.data && livePositions.data.length > 0 ? (
-            <section className="rounded-lg border border-[#00c076]/25 bg-[#0d111a] p-2.5" data-testid="running-trades-section">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="font-heading text-sm font-semibold text-slate-100">Running positions</h2>
-                <span className="num inline-flex items-center gap-1.5 text-[11px] text-[#00c076]" data-testid="history-live-indicator">
-                  <span className="h-1.5 w-1.5 animate-[beacon_1.6s_ease-in-out_infinite] rounded-full bg-[#00c076]" />
-                  {livePositions.data.length} live
-                </span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {livePositions.data.map((position) => (
-                  <TradePositionCard
-                    key={position.trade_id || position.pair}
-                    record={position}
-                    expanded={expandedPositionId === position.trade_id}
-                    onToggle={() => setExpandedPositionId(expandedPositionId === position.trade_id ? null : position.trade_id)}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
 
           {selectedTrade && !selectedTradeIsRunning ? (
             <section className="rounded-lg border border-[#1e293b] bg-[#0d111a] p-2.5" data-testid="selected-trade-details">
